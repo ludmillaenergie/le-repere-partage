@@ -78,6 +78,11 @@
 
   .signature { margin-top: 30px; text-align: center; font-family: 'Allura', cursive; font-size: 26px; color: var(--gold); }
 
+  #preview-block { margin-bottom: 20px; padding: 22px 20px; background: var(--bg); border-radius: 12px; border: 1px solid rgba(200,169,110,0.25); }
+  .preview-text { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.7; color: var(--ink); }
+  .preview-text p { margin: 0 0 14px; }
+  .preview-text p:last-child { margin-bottom: 0; }
+
   /* --- app (après connexion) --- */
   #app { display: none; max-width: 640px; margin: 0 auto; padding: 0 0 60px; }
   header.top { text-align: center; padding: 48px 24px 30px; }
@@ -117,36 +122,46 @@
     </section>
 
     <section id="signup-fields">
-      <div class="field">
-        <label for="s-name">Prénom</label>
-        <input type="text" id="s-name">
-      </div>
-      <div class="field">
-        <label for="s-username">Identifiant souhaité</label>
-        <input type="text" id="s-username" autocomplete="username">
-        <div class="hint">3-30 caractères, lettres/chiffres/tirets uniquement</div>
-      </div>
-      <div class="field">
-        <label for="s-password">Mot de passe</label>
-        <input type="password" id="s-password" autocomplete="new-password">
-        <div class="hint">8 caractères minimum</div>
-      </div>
-      <div class="field-row">
+      <div id="signup-step-1">
         <div class="field">
-          <label for="s-date">Date de naissance</label>
-          <input type="date" id="s-date">
+          <label for="s-name">Prénom</label>
+          <input type="text" id="s-name">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="s-date">Date de naissance</label>
+            <input type="date" id="s-date">
+          </div>
+          <div class="field">
+            <label for="s-time">Heure de naissance</label>
+            <input type="time" id="s-time">
+          </div>
         </div>
         <div class="field">
-          <label for="s-time">Heure de naissance</label>
-          <input type="time" id="s-time">
+          <label for="s-city">Lieu de naissance</label>
+          <input type="text" id="s-city" placeholder="Commence à taper une ville…" autocomplete="off">
+          <div id="city-suggestions"></div>
         </div>
+        <button class="primary" id="preview-btn">Découvrir mon avant-goût</button>
       </div>
-      <div class="field">
-        <label for="s-city">Lieu de naissance</label>
-        <input type="text" id="s-city" placeholder="Commence à taper une ville…" autocomplete="off">
-        <div id="city-suggestions"></div>
+
+      <div id="preview-block" style="display:none;">
+        <div class="preview-text" id="preview-text"></div>
       </div>
-      <button class="primary" id="signup-btn">Créer mon compte</button>
+
+      <div id="signup-step-2" style="display:none;">
+        <div class="field">
+          <label for="s-username">Identifiant souhaité</label>
+          <input type="text" id="s-username" autocomplete="username">
+          <div class="hint">3-30 caractères, lettres/chiffres/tirets uniquement</div>
+        </div>
+        <div class="field">
+          <label for="s-password">Mot de passe</label>
+          <input type="password" id="s-password" autocomplete="new-password">
+          <div class="hint">8 caractères minimum</div>
+        </div>
+        <button class="primary" id="signup-btn">Créer mon compte et m'abonner</button>
+      </div>
     </section>
 
     <div class="status" id="gate-status"></div>
@@ -180,6 +195,12 @@ function switchTab(which) {
   document.getElementById("login-fields").classList.toggle("visible", which === "login");
   document.getElementById("signup-fields").classList.toggle("visible", which === "signup");
   document.getElementById("gate-status").textContent = "";
+  if (which === "signup") {
+    document.getElementById("signup-step-1").style.display = "block";
+    document.getElementById("preview-block").style.display = "none";
+    document.getElementById("signup-step-2").style.display = "none";
+    computedProfile = null;
+  }
 }
 
 /* ============ RECHERCHE DE VILLE (réutilisée du prototype précédent) ============ */
@@ -226,6 +247,74 @@ function computeLifePath(birthdate) {
   return reduceKeepMaster(digits.reduce((a, b) => a + b, 0));
 }
 
+/* ============ CALCUL DU PROFIL (réutilisé pour l'avant-goût ET l'inscription) ============ */
+function computeProfileFromForm() {
+  const name = document.getElementById("s-name").value.trim();
+  const birthdate = document.getElementById("s-date").value;
+  const birthtime = document.getElementById("s-time").value;
+
+  if (!name || !birthdate || !birthtime || !selectedCity) {
+    return null;
+  }
+
+  const timezone = resolveTimezone(selectedCity.lat, selectedCity.lng);
+  const chart = window.FreeHumanDesign.computeChart({
+    birthdate, birthtime, timezone, location: selectedCity
+  });
+  const [line1, line2] = chart.humanDesign.profile.split("/").map(Number);
+  const gk = chart.geneKeys.spheres;
+  return {
+    name,
+    type: chart.humanDesign.type,
+    authority: chart.humanDesign.authority,
+    profileLines: [line1, line2],
+    lifePath: computeLifePath(birthdate),
+    geneKeys: { lifeswork: gk.lifeswork, evolution: gk.evolution, radiance: gk.radiance, purpose: gk.purpose }
+  };
+}
+
+let computedProfile = null;
+
+/* ============ AVANT-GOÛT GRATUIT ============ */
+document.getElementById("preview-btn").addEventListener("click", async () => {
+  const statusEl = document.getElementById("gate-status");
+  const btn = document.getElementById("preview-btn");
+  statusEl.className = "status";
+  statusEl.textContent = "";
+
+  const profile = computeProfileFromForm();
+  if (!profile) {
+    statusEl.className = "status error";
+    statusEl.textContent = "Merci de remplir le prénom, la date, l'heure et le lieu de naissance (choisi dans la liste).";
+    return;
+  }
+  computedProfile = profile;
+
+  btn.disabled = true;
+  statusEl.textContent = "Calcul de l'avant-goût en cours…";
+
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "preview", profile })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur inconnue");
+
+    document.getElementById("preview-text").innerHTML = data.text.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
+    document.getElementById("preview-block").style.display = "block";
+    document.getElementById("signup-step-1").style.display = "none";
+    document.getElementById("signup-step-2").style.display = "block";
+    statusEl.textContent = "";
+  } catch (e) {
+    statusEl.className = "status error";
+    statusEl.textContent = "Erreur : " + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 /* ============ INSCRIPTION ============ */
 document.getElementById("signup-btn").addEventListener("click", async () => {
   const statusEl = document.getElementById("gate-status");
@@ -233,41 +322,23 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
   statusEl.className = "status";
   statusEl.textContent = "";
 
-  const name = document.getElementById("s-name").value.trim();
   const username = document.getElementById("s-username").value.trim();
   const password = document.getElementById("s-password").value;
-  const birthdate = document.getElementById("s-date").value;
-  const birthtime = document.getElementById("s-time").value;
 
-  if (!name || !username || !password || !birthdate || !birthtime || !selectedCity) {
+  if (!username || !password || !computedProfile) {
     statusEl.className = "status error";
-    statusEl.textContent = "Merci de remplir tous les champs, y compris le choix d'une ville dans la liste.";
+    statusEl.textContent = "Merci de choisir un identifiant et un mot de passe.";
     return;
   }
 
   btn.disabled = true;
-  statusEl.textContent = "Calcul du profil et création du compte…";
+  statusEl.textContent = "Création du compte…";
 
   try {
-    const timezone = resolveTimezone(selectedCity.lat, selectedCity.lng);
-    const chart = window.FreeHumanDesign.computeChart({
-      birthdate, birthtime, timezone, location: selectedCity
-    });
-    const [line1, line2] = chart.humanDesign.profile.split("/").map(Number);
-    const gk = chart.geneKeys.spheres;
-    const profile = {
-      name,
-      type: chart.humanDesign.type,
-      authority: chart.humanDesign.authority,
-      profileLines: [line1, line2],
-      lifePath: computeLifePath(birthdate),
-      geneKeys: { lifeswork: gk.lifeswork, evolution: gk.evolution, radiance: gk.radiance, purpose: gk.purpose }
-    };
-
     const res = await fetch(WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "signup_intent", username, password, profile })
+      body: JSON.stringify({ action: "signup_intent", username, password, profile: computedProfile })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Erreur inconnue");
