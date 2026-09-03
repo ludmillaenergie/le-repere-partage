@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bienvenue dans Le Repère</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c8a96e;
+    --ink: #3a352f;
+    --ivory: #faf6ef;
+    --ivory-deep: #f2ead9;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, var(--ivory) 0%, var(--ivory-deep) 100%);
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--ink);
+    padding: 32px 20px;
+  }
+
+  .card {
+    max-width: 560px;
+    width: 100%;
+    text-align: center;
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 56px 40px;
+    box-shadow: 0 12px 40px rgba(200, 169, 110, 0.18);
+    border: 1px solid rgba(200, 169, 110, 0.25);
+  }
+
+  .ornament {
+    font-size: 28px;
+    color: var(--gold);
+    margin-bottom: 18px;
+    letter-spacing: 6px;
+  }
+
+  h1 {
+    font-weight: 500;
+    font-size: 34px;
+    letter-spacing: 0.5px;
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+
+  p {
+    font-size: 19px;
+    line-height: 1.6;
+    color: #5a5347;
+    margin-bottom: 14px;
+  }
+
+  .cta {
+    display: inline-block;
+    margin-top: 26px;
+    padding: 14px 36px;
+    background: var(--gold);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 30px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 15px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    transition: all 0.25s ease;
+  }
+
+  .cta:hover {
+    background: #b8975a;
+    transform: translateY(-1px);
+  }
+
+  .note {
+    margin-top: 28px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.4px;
+    color: #a89a7d;
+  }
+
+  .signature {
+    margin-top: 40px;
+    font-family: 'Allura', cursive;
+    font-size: 32px;
+    color: var(--gold);
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="ornament">✦</div>
+    <h1>Bienvenue dans Le Repère</h1>
+    <p>L'abonnement est confirmé. Un espace de lecture quotidienne s'ouvre désormais, tissé d'astrologie, de Human Design, de Gene Keys et de numérologie.</p>
+    <p>La connexion se fait avec les identifiants créés à l'inscription.</p>
+    <a class="cta" href="https://ludmillaenergie.github.io/le-repere-partage/">Se connecter au Repère</a>
+    <p class="note">Un souci de connexion ? Écrire simplement à Ludmilla Énergie.</p>
+    <div class="signature">Ludmilla Énergie</div>
+  </div>
+</body>
+</html>
