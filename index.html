@@ -205,6 +205,10 @@
     <div class="label">Lecture du jour</div>
     <div class="title">Comment le traverser</div>
     <div id="reading"><div class="loading">Lecture en cours de génération…</div></div>
+    <details id="reading-detail" style="display:none;">
+      <summary>Comprendre d'où vient cette lecture</summary>
+      <div id="reading-detail-content"></div>
+    </details>
   </section>
 
   <section class="block" id="explore-section" style="display:none;">
@@ -219,6 +223,17 @@
 </div>
 
 <style>
+  #reading-detail { margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(200,169,110,0.22); }
+  #reading-detail summary {
+    cursor: pointer; font-family: 'Raleway', sans-serif; font-size: 12.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--gold); list-style: none; user-select: none;
+  }
+  #reading-detail summary::-webkit-details-marker { display: none; }
+  #reading-detail summary::before { content: "+ "; }
+  #reading-detail[open] summary::before { content: "− "; }
+  #reading-detail-content { margin-top: 16px; font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.7; color: var(--ink-dim); }
+  #reading-detail-content p { margin: 0 0 14px; }
+
   #chat-messages { margin-bottom: 14px; }
   .chat-msg { padding: 12px 14px; margin-bottom: 10px; border-radius: 10px; }
   .chat-msg.user { background: var(--bg); border-left: 3px solid var(--gold); font-size: 14px; color: var(--ink-dim); }
@@ -453,7 +468,7 @@ document.getElementById("login-btn").addEventListener("click", async () => {
 
     sessionUsername = username;
     sessionPassword = password;
-    currentReadingText = data.text;
+    currentReadingText = data.text + (data.detailText ? "\n\n" + data.detailText : "");
 
     document.getElementById("gate").style.display = "none";
     document.getElementById("app").style.display = "block";
@@ -465,6 +480,10 @@ document.getElementById("login-btn").addEventListener("click", async () => {
     document.getElementById("moon-sign").textContent = data.moonSign;
     document.getElementById("moon-phase").textContent = data.moonPhase;
     document.getElementById("reading").innerHTML = data.text.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
+    if (data.detailText) {
+      document.getElementById("reading-detail-content").innerHTML = data.detailText.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
+      document.getElementById("reading-detail").style.display = "block";
+    }
     document.getElementById("explore-section").style.display = "block";
   } catch (e) {
     statusEl.className = "status error";
