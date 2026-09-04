@@ -78,6 +78,11 @@
 
   .signature { margin-top: 30px; text-align: center; font-family: 'Allura', cursive; font-size: 26px; color: var(--gold); }
 
+  .field-checkbox { margin-bottom: 16px; }
+  .field-checkbox label { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--ink); cursor: pointer; }
+  .field-checkbox input[type="checkbox"] { margin-top: 2px; accent-color: var(--gold); }
+  .field-checkbox .hint { margin-left: 24px; margin-top: 4px; }
+
   #preview-block { margin-bottom: 20px; padding: 22px 20px; background: var(--bg); border-radius: 12px; border: 1px solid rgba(200,169,110,0.25); }
   .preview-text { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.7; color: var(--ink); }
   .preview-text p { margin: 0 0 14px; }
@@ -132,10 +137,14 @@
             <label for="s-date">Date de naissance</label>
             <input type="date" id="s-date">
           </div>
-          <div class="field">
+          <div class="field" id="time-field">
             <label for="s-time">Heure de naissance</label>
             <input type="time" id="s-time">
           </div>
+        </div>
+        <div class="field-checkbox">
+          <label><input type="checkbox" id="s-time-unknown"> Je ne connais pas mon heure de naissance exacte</label>
+          <div class="hint">Ta lecture restera juste sur la numérologie et l'essentiel de ton Design Humain, sans l'Ascendant ni les maisons astrologiques (qui demandent une heure précise).</div>
         </div>
         <div class="field">
           <label for="s-city">Lieu de naissance</label>
@@ -329,7 +338,8 @@ function computeLifePath(birthdate) {
 function computeProfileFromForm() {
   const name = document.getElementById("s-name").value.trim();
   const birthdate = document.getElementById("s-date").value;
-  const birthtime = document.getElementById("s-time").value;
+  const timeUnknown = document.getElementById("s-time-unknown").checked;
+  const birthtime = timeUnknown ? "12:00" : document.getElementById("s-time").value;
 
   if (!name || !birthdate || !birthtime || !selectedCity) {
     return null;
@@ -348,10 +358,14 @@ function computeProfileFromForm() {
     profileLines: [line1, line2],
     lifePath: computeLifePath(birthdate),
     geneKeys: { lifeswork: gk.lifeswork, evolution: gk.evolution, radiance: gk.radiance, purpose: gk.purpose },
-    birthdate, birthtime,
+    birthdate, birthtime, timeUnknown,
     lat: selectedCity.lat, lng: selectedCity.lng
   };
 }
+
+document.getElementById("s-time-unknown").addEventListener("change", (e) => {
+  document.getElementById("time-field").style.display = e.target.checked ? "none" : "block";
+});
 
 let computedProfile = null;
 
