@@ -206,8 +206,35 @@
     <div class="title">Comment le traverser</div>
     <div id="reading"><div class="loading">Lecture en cours de génération…</div></div>
   </section>
+
+  <section class="block" id="explore-section" style="display:none;">
+    <div class="label">Pour aller plus loin</div>
+    <div class="title">Explorer</div>
+    <div id="chat-messages"></div>
+    <div class="chat-input-row">
+      <textarea class="chat-textarea" id="chat-input" placeholder="Une question sur la lecture, un mot que tu ne comprends pas..."></textarea>
+      <button class="primary" id="chat-send">Envoyer</button>
+    </div>
+  </section>
 </div>
 
+<style>
+  #chat-messages { margin-bottom: 14px; }
+  .chat-msg { padding: 12px 14px; margin-bottom: 10px; border-radius: 10px; }
+  .chat-msg.user { background: var(--bg); border-left: 3px solid var(--gold); font-size: 14px; color: var(--ink-dim); }
+  .chat-msg.assistant { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.65; color: var(--ink); padding-left: 2px; }
+  .chat-msg.assistant p { margin: 0 0 10px; }
+  .chat-msg.assistant p:last-child { margin-bottom: 0; }
+  .chat-input-row { display: flex; flex-direction: column; gap: 10px; }
+  .chat-textarea {
+    width: 100%; background: var(--bg); border: 1px solid rgba(200,169,110,0.3); color: var(--ink);
+    font-family: 'Cormorant Garamond', serif; font-size: 16px; padding: 12px 14px; border-radius: 8px;
+    resize: vertical; min-height: 52px; outline: none;
+  }
+  .chat-textarea:focus { border-color: var(--gold); }
+  .chat-textarea::placeholder { color: var(--ink-dim); font-style: italic; }
+  #chat-send { align-self: flex-start; padding: 11px 24px; margin-top: 0; }
+</style>
 <style>
   .num-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
   .num-item { flex: 1; min-width: 130px; background: var(--bg); padding: 16px; border-radius: 10px; border: 1px solid rgba(200,169,110,0.18); }
@@ -393,7 +420,12 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
   }
 });
 
-/* ============ CONNEXION ============ */
+/* ============ CONNEXION + EXPLORER ============ */
+let currentReadingText = "";
+let chatHistory = [];
+let sessionUsername = "";
+let sessionPassword = "";
+
 document.getElementById("login-btn").addEventListener("click", async () => {
   const statusEl = document.getElementById("gate-status");
   const btn = document.getElementById("login-btn");
@@ -419,6 +451,10 @@ document.getElementById("login-btn").addEventListener("click", async () => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
+    sessionUsername = username;
+    sessionPassword = password;
+    currentReadingText = data.text;
+
     document.getElementById("gate").style.display = "none";
     document.getElementById("app").style.display = "block";
     document.getElementById("app-greeting").textContent = "Bonjour";
@@ -429,11 +465,75 @@ document.getElementById("login-btn").addEventListener("click", async () => {
     document.getElementById("moon-sign").textContent = data.moonSign;
     document.getElementById("moon-phase").textContent = data.moonPhase;
     document.getElementById("reading").innerHTML = data.text.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
+    document.getElementById("explore-section").style.display = "block";
   } catch (e) {
     statusEl.className = "status error";
     statusEl.textContent = "Erreur : " + e.message;
   } finally {
     btn.disabled = false;
+  }
+});
+
+function renderChatMessage(role, text) {
+  const container = document.getElementById("chat-messages");
+  const el = document.createElement("div");
+  el.className = "chat-msg " + role;
+  if (role === "assistant") {
+    el.innerHTML = text.split(/\n\n+/).map(p => `<p>${p.trim()}</p>`).join("");
+  } else {
+    el.textContent = text;
+  }
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById("chat-input");
+  const sendBtn = document.getElementById("chat-send");
+  const question = input.value.trim();
+  if (!question || !currentReadingText) return;
+
+  renderChatMessage("user", question);
+  input.value = "";
+  sendBtn.disabled = true;
+
+  const loadingEl = document.createElement("div");
+  loadingEl.className = "chat-msg assistant";
+  loadingEl.innerHTML = '<span class="loading">…</span>';
+  document.getElementById("chat-messages").appendChild(loadingEl);
+
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "followup",
+        username: sessionUsername,
+        password: sessionPassword,
+        readingText: currentReadingText,
+        question,
+        history: chatHistory
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur inconnue");
+    loadingEl.remove();
+    renderChatMessage("assistant", data.text);
+    chatHistory.push({ role: "user", content: question });
+    chatHistory.push({ role: "assistant", content: data.text });
+  } catch (e) {
+    loadingEl.remove();
+    renderChatMessage("assistant", "Impossible de répondre pour le moment, réessaie dans un instant.");
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+document.getElementById("chat-send").addEventListener("click", sendChatMessage);
+document.getElementById("chat-input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage();
   }
 });
 </script>
