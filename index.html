@@ -173,13 +173,49 @@
   <header class="top">
     <div class="eyebrow">Le Repère</div>
     <h1 id="app-greeting">–</h1>
+    <div class="date" id="app-date"></div>
   </header>
+  <section class="block">
+    <div class="label">Ta boussole du jour</div>
+    <div class="title">Numérologie</div>
+    <div class="num-row">
+      <div class="num-item">
+        <div class="n" id="num-month">–</div>
+        <div class="l">Mois personnel</div>
+        <div class="t" id="num-month-theme">–</div>
+      </div>
+      <div class="num-item">
+        <div class="n" id="num-day">–</div>
+        <div class="l">Jour personnel</div>
+        <div class="t">Résonance du jour, dans le mois en cours</div>
+      </div>
+      <div class="num-item">
+        <div class="n" id="moon-sign">–</div>
+        <div class="l">Lune du jour</div>
+        <div class="t">Tonalité émotionnelle du jour</div>
+      </div>
+      <div class="num-item">
+        <div class="n" id="moon-phase" style="font-size: 22px;">–</div>
+        <div class="l">Phase lunaire</div>
+        <div class="t">Où en est le cycle en ce moment</div>
+      </div>
+    </div>
+  </section>
   <section class="block">
     <div class="label">Lecture du jour</div>
     <div class="title">Comment le traverser</div>
     <div id="reading"><div class="loading">Lecture en cours de génération…</div></div>
   </section>
 </div>
+
+<style>
+  .num-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
+  .num-item { flex: 1; min-width: 130px; background: var(--bg); padding: 16px; border-radius: 10px; border: 1px solid rgba(200,169,110,0.18); }
+  .num-item .n { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 30px; color: var(--gold); line-height: 1; }
+  .num-item .l { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); margin-top: 8px; }
+  .num-item .t { font-size: 12.5px; color: var(--ink-dim); margin-top: 6px; line-height: 1.4; }
+  header.top .date { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--ink-dim); text-transform: capitalize; margin-top: 6px; }
+</style>
 
 <script src="fhd-bundle.js"></script>
 <script>
@@ -386,6 +422,12 @@ document.getElementById("login-btn").addEventListener("click", async () => {
     document.getElementById("gate").style.display = "none";
     document.getElementById("app").style.display = "block";
     document.getElementById("app-greeting").textContent = "Bonjour";
+    document.getElementById("app-date").textContent = new Date(data.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    document.getElementById("num-month").textContent = data.numerology.personalMonth;
+    document.getElementById("num-month-theme").textContent = data.numerology.monthTheme;
+    document.getElementById("num-day").textContent = data.numerology.personalDay;
+    document.getElementById("moon-sign").textContent = data.moonSign;
+    document.getElementById("moon-phase").textContent = data.moonPhase;
     document.getElementById("reading").innerHTML = data.text.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
   } catch (e) {
     statusEl.className = "status error";
