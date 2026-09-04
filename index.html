@@ -269,7 +269,9 @@ function computeProfileFromForm() {
     authority: chart.humanDesign.authority,
     profileLines: [line1, line2],
     lifePath: computeLifePath(birthdate),
-    geneKeys: { lifeswork: gk.lifeswork, evolution: gk.evolution, radiance: gk.radiance, purpose: gk.purpose }
+    geneKeys: { lifeswork: gk.lifeswork, evolution: gk.evolution, radiance: gk.radiance, purpose: gk.purpose },
+    birthdate, birthtime,
+    lat: selectedCity.lat, lng: selectedCity.lng
   };
 }
 
@@ -373,18 +375,10 @@ document.getElementById("login-btn").addEventListener("click", async () => {
   statusEl.textContent = "Connexion…";
 
   try {
-    // Les données astro du jour sont génériques, calculées ici comme avant (non montré : identique à computeToday() du prototype précédent).
-    const payload = {
-      action: "reading", username, password,
-      date: new Date().toISOString(),
-      numerology: { personalMonth: 5, monthTheme: "Introspection, retrait", personalDay: 3 },
-      moonSign: "Poissons", moonPhase: "Pleine Lune", retrogradePlanets: [],
-      aspects: []
-    };
     const res = await fetch(WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ action: "reading", username, password })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Erreur inconnue");
