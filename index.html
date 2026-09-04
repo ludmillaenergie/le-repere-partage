@@ -229,9 +229,19 @@
       <button class="primary" id="chat-send">Envoyer</button>
     </div>
   </section>
+
+  <div class="account-footer">
+    <span id="account-status"></span>
+    <a href="#" id="manage-subscription-link">Gérer mon abonnement</a>
+  </div>
 </div>
 
 <style>
+  .account-footer { text-align: center; padding: 30px 20px 10px; font-family: 'Raleway', sans-serif; font-size: 12px; }
+  .account-footer a { color: var(--ink-dim); text-decoration: underline; cursor: pointer; }
+  .account-footer a:hover { color: var(--gold); }
+  #account-status { display: block; color: var(--wine); margin-bottom: 6px; }
+
   #reading-detail { margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(200,169,110,0.22); }
   #reading-detail summary {
     cursor: pointer; font-family: 'Raleway', sans-serif; font-size: 12.5px; letter-spacing: 0.08em;
@@ -567,6 +577,28 @@ document.getElementById("chat-input").addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendChatMessage();
+  }
+});
+
+document.getElementById("manage-subscription-link").addEventListener("click", async (e) => {
+  e.preventDefault();
+  const link = e.target;
+  const statusEl = document.getElementById("account-status");
+  statusEl.textContent = "";
+  link.textContent = "Ouverture en cours…";
+
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "portal_session", username: sessionUsername, password: sessionPassword })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur inconnue");
+    window.location.href = data.url;
+  } catch (err) {
+    statusEl.textContent = "Erreur : " + err.message;
+    link.textContent = "Gérer mon abonnement";
   }
 });
 </script>
