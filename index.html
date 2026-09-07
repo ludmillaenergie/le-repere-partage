@@ -393,16 +393,19 @@ document.getElementById("preview-btn").addEventListener("click", async () => {
   statusEl.className = "status";
   statusEl.textContent = "";
 
+  btn.disabled = true;
+  statusEl.textContent = "Calcul de l'avant-goût en cours…";
+  // Laisse le navigateur peindre l'état "en cours" avant de lancer le calcul lourd du thème
+  await new Promise(resolve => setTimeout(resolve, 0));
+
   const profile = computeProfileFromForm();
   if (!profile) {
     statusEl.className = "status error";
     statusEl.textContent = "Merci de remplir le prénom, la date, l'heure et le lieu de naissance (choisi dans la liste).";
+    btn.disabled = false;
     return;
   }
   computedProfile = profile;
-
-  btn.disabled = true;
-  statusEl.textContent = "Calcul de l'avant-goût en cours…";
 
   try {
     const res = await fetch(WORKER_URL, {
