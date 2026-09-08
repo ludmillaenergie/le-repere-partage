@@ -88,7 +88,7 @@
   .signup-intro { margin-bottom: 22px; text-align: left; }
   .signup-promise { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500; font-size: 21px; line-height: 1.35; color: var(--ink); margin: 0 0 10px; }
   .signup-promise-sub { font-size: 13.5px; line-height: 1.5; color: var(--ink-dim); margin: 0; }
-  .confidentiality-note { font-size: 11.5px; color: var(--ink-dim); font-style: italic; font-family: 'Cormorant Garamond', serif; margin: -8px 0 16px; }
+  .confidentiality-note { font-size: 14px; color: var(--ink); font-style: italic; font-family: 'Cormorant Garamond', serif; margin: -6px 0 18px; line-height: 1.4; }
   .reassurance { text-align: center; font-size: 11.5px; color: var(--ink-dim); font-style: italic; font-family: 'Cormorant Garamond', serif; margin-top: 10px; }
 
   .field-checkbox { margin-bottom: 16px; }
@@ -143,13 +143,14 @@
       <div id="signup-step-1">
         <div class="signup-intro">
           <p class="signup-promise">Comprendre ce que tu vis.<br>Savoir comment le traverser.</p>
-          <p class="signup-promise-sub">Chaque jour, Le Repère t'aide à comprendre ce que tu traverses et à savoir s'il est temps d'agir, de ralentir, ou de prendre du recul.</p>
+          <p class="signup-promise-sub">Chaque jour, Le Repère t'aide à comprendre ce que tu traverses et à savoir s'il est temps d'agir, de ralentir ou de prendre du recul.</p>
+          <p class="signup-promise-sub">Commence par un avant-goût gratuit, sans carte bancaire.</p>
         </div>
         <div class="field">
           <label for="s-name">Prénom</label>
           <input type="text" id="s-name">
         </div>
-        <p class="confidentiality-note">Ces informations permettent de créer une lecture qui part réellement de toi. Elles restent confidentielles.</p>
+        <p class="confidentiality-note">Tes informations permettent de créer une lecture qui part réellement de toi. Elles restent confidentielles.</p>
         <div class="field-row">
           <div class="field">
             <label for="s-date">Date de naissance</label>
@@ -170,7 +171,7 @@
           <div id="city-suggestions"></div>
         </div>
         <button class="primary" id="preview-btn">Découvrir mon avant-goût</button>
-        <div class="reassurance">Gratuit, sans carte bancaire.</div>
+        <div class="reassurance">Gratuit, sans carte bancaire et sans engagement.</div>
       </div>
 
       <div id="preview-block" style="display:none;">
