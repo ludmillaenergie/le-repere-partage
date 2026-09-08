@@ -85,6 +85,12 @@
 
   .signature { margin-top: 30px; text-align: center; font-family: 'Allura', cursive; font-size: 26px; color: var(--gold); }
 
+  .signup-intro { margin-bottom: 22px; text-align: left; }
+  .signup-promise { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500; font-size: 21px; line-height: 1.35; color: var(--ink); margin: 0 0 10px; }
+  .signup-promise-sub { font-size: 13.5px; line-height: 1.5; color: var(--ink-dim); margin: 0; }
+  .confidentiality-note { font-size: 11.5px; color: var(--ink-dim); font-style: italic; font-family: 'Cormorant Garamond', serif; margin: -8px 0 16px; }
+  .reassurance { text-align: center; font-size: 11.5px; color: var(--ink-dim); font-style: italic; font-family: 'Cormorant Garamond', serif; margin-top: 10px; }
+
   .field-checkbox { margin-bottom: 16px; }
   .field-checkbox label { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--ink); cursor: pointer; }
   .field-checkbox input[type="checkbox"] { margin-top: 2px; accent-color: var(--gold); }
@@ -117,11 +123,11 @@
     <h1 class="gate-title">Bienvenue</h1>
 
     <div class="tabs">
-      <div class="tab active" id="tab-login">J'ai déjà un compte</div>
-      <div class="tab" id="tab-signup">Je m'inscris</div>
+      <div class="tab" id="tab-login">J'ai déjà un compte</div>
+      <div class="tab active" id="tab-signup">Découvrir Le Repère</div>
     </div>
 
-    <section id="login-fields" class="visible">
+    <section id="login-fields">
       <div class="field">
         <label for="l-username">Identifiant</label>
         <input type="text" id="l-username" autocomplete="username">
@@ -133,12 +139,17 @@
       <button class="primary" id="login-btn">Entrer</button>
     </section>
 
-    <section id="signup-fields">
+    <section id="signup-fields" class="visible">
       <div id="signup-step-1">
+        <div class="signup-intro">
+          <p class="signup-promise">Comprendre ce que tu vis.<br>Savoir comment le traverser.</p>
+          <p class="signup-promise-sub">Chaque jour, Le Repère t'aide à comprendre ce que tu traverses et à savoir s'il est temps d'agir, de ralentir, ou de prendre du recul.</p>
+        </div>
         <div class="field">
           <label for="s-name">Prénom</label>
           <input type="text" id="s-name">
         </div>
+        <p class="confidentiality-note">Ces informations permettent de créer une lecture qui part réellement de toi. Elles restent confidentielles.</p>
         <div class="field-row">
           <div class="field">
             <label for="s-date">Date de naissance</label>
@@ -159,6 +170,7 @@
           <div id="city-suggestions"></div>
         </div>
         <button class="primary" id="preview-btn">Découvrir mon avant-goût</button>
+        <div class="reassurance">Gratuit, sans carte bancaire.</div>
       </div>
 
       <div id="preview-block" style="display:none;">
