@@ -101,6 +101,16 @@
   .preview-text p { margin: 0 0 14px; }
   .preview-text p:last-child { margin-bottom: 0; }
 
+  .transition-divider { height: 1px; background: rgba(200,169,110,0.28); margin: 4px 0 22px; }
+  .transition-lead { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 19px; color: var(--ink); margin: 0 0 16px; }
+  .transition-text { font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); margin: 0 0 12px; }
+  .transition-diff { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--ink-dim); margin: 0 0 20px; line-height: 1.5; }
+  .transition-list { list-style: none; margin: 0 0 22px; padding: 0; }
+  .transition-list li { font-family: 'Cormorant Garamond', serif; font-size: 16.5px; color: var(--ink); padding-left: 18px; position: relative; margin-bottom: 9px; line-height: 1.4; }
+  .transition-list li::before { content: "–"; position: absolute; left: 0; color: var(--gold); }
+  .transition-price { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 23px; color: var(--gold); margin: 0 0 6px; }
+  .transition-price-sub { font-family: 'Raleway', sans-serif; font-style: normal; font-size: 12px; color: var(--ink-dim); margin-left: 8px; }
+
   /* --- app (après connexion) --- */
   #app { display: none; max-width: 640px; margin: 0 auto; padding: 0 0 60px; }
   header.top { text-align: center; padding: 48px 24px 30px; }
@@ -177,6 +187,20 @@
         <div class="preview-text" id="preview-text"></div>
       </div>
 
+      <div id="transition-block" style="display:none;">
+        <div class="transition-divider"></div>
+        <p class="transition-lead">Cet avant-goût est un instantané. Le Repère va plus loin.</p>
+        <p class="transition-text">Chaque jour, tu retrouves :</p>
+        <ul class="transition-list">
+          <li>une lecture qui croise ton fonctionnement avec le ciel du jour</li>
+          <li>ce que cette énergie vient toucher chez toi, précisément</li>
+          <li>une indication pour savoir si agir, ralentir, ou lâcher</li>
+          <li>un espace pour poser ta question sur ce que tu vis</li>
+        </ul>
+        <p class="transition-diff">Cet avant-goût part uniquement de ton fonctionnement de fond. Le Repère, lui, se renouvelle chaque jour avec toi.</p>
+        <p class="transition-price">11,90&nbsp;€ par mois <span class="transition-price-sub">sans engagement, résiliable à tout moment</span></p>
+      </div>
+
       <div id="signup-step-2" style="display:none;">
         <div class="field">
           <label for="s-username">Identifiant souhaité</label>
@@ -188,7 +212,8 @@
           <input type="password" id="s-password" autocomplete="new-password">
           <div class="hint">8 caractères minimum</div>
         </div>
-        <button class="primary" id="signup-btn">Créer mon compte et m'abonner</button>
+        <button class="primary" id="signup-btn">Accéder à mon Repère</button>
+        <div class="reassurance">Paiement sécurisé de 11,90&nbsp;€ par mois. Sans engagement.</div>
       </div>
     </section>
 
@@ -314,6 +339,7 @@ function switchTab(which) {
   if (which === "signup") {
     document.getElementById("signup-step-1").style.display = "block";
     document.getElementById("preview-block").style.display = "none";
+    document.getElementById("transition-block").style.display = "none";
     document.getElementById("signup-step-2").style.display = "none";
     computedProfile = null;
   }
@@ -430,6 +456,7 @@ document.getElementById("preview-btn").addEventListener("click", async () => {
 
     document.getElementById("preview-text").innerHTML = data.text.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
     document.getElementById("preview-block").style.display = "block";
+    document.getElementById("transition-block").style.display = "block";
     document.getElementById("signup-step-1").style.display = "none";
     document.getElementById("signup-step-2").style.display = "block";
     statusEl.textContent = "";
