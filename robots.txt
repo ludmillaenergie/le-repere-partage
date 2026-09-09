@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ludmillaenergie.github.io/le-repere-partage/sitemap.xml
+Sitemap: https://lerepere.ludmillaenergie.fr/sitemap.xml
