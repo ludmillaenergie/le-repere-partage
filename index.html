@@ -431,7 +431,17 @@ let computedProfile = null;
 
 /* ============ STREAMING NDJSON (preview / reading) ============ */
 async function streamNdjson(response, onMessage) {
-  const reader = response.body.getReader();
+  if (!response.body || typeof response.body.getReader !== "function") {
+    return readNdjsonOnce(response, onMessage);
+  }
+
+  let reader;
+  try {
+    reader = response.body.getReader();
+  } catch (e) {
+    return readNdjsonOnce(response, onMessage);
+  }
+
   const decoder = new TextDecoder();
   let buffer = "";
 
@@ -451,6 +461,14 @@ async function streamNdjson(response, onMessage) {
 
   const trimmed = buffer.trim();
   if (trimmed) onMessage(JSON.parse(trimmed));
+}
+
+async function readNdjsonOnce(response, onMessage) {
+  const text = await response.text();
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed) onMessage(JSON.parse(trimmed));
+  }
 }
 
 async function requestPreview(profile, { onDelta, onDone, onError }) {
