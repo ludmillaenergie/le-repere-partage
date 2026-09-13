@@ -429,6 +429,108 @@ document.getElementById("s-time-unknown").addEventListener("change", (e) => {
 
 let computedProfile = null;
 
+/* ============ STREAMING NDJSON (preview / reading) ============ */
+async function streamNdjson(response, onMessage) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop();
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed) onMessage(JSON.parse(trimmed));
+    }
+  }
+
+  const trimmed = buffer.trim();
+  if (trimmed) onMessage(JSON.parse(trimmed));
+}
+
+async function requestPreview(profile, { onDelta, onDone, onError }) {
+  let response;
+  try {
+    response = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "preview", profile })
+    });
+  } catch (e) {
+    onError("Impossible de contacter le serveur.");
+    return;
+  }
+
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    onError(errBody.error || "Erreur lors de la génération.");
+    return;
+  }
+
+  let fullText = "";
+  try {
+    await streamNdjson(response, (msg) => {
+      if (msg.delta) {
+        fullText += msg.delta;
+        onDelta(fullText);
+      } else if (msg.error) {
+        onError("La génération a été interrompue.");
+      } else if (msg.done) {
+        onDone(fullText);
+      }
+    });
+  } catch (e) {
+    onError("La connexion a été interrompue pendant la génération.");
+  }
+}
+
+async function requestReading({ username, password }, { onMeta, onSimpleDelta, onDetailDelta, onDone, onError }) {
+  let response;
+  try {
+    response = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "reading", username, password })
+    });
+  } catch (e) {
+    onError("Impossible de contacter le serveur.");
+    return;
+  }
+
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    onError(errBody.error || "Erreur lors de la génération.");
+    return;
+  }
+
+  let simpleText = "";
+  let detailText = "";
+  try {
+    await streamNdjson(response, (msg) => {
+      if (msg.meta) {
+        onMeta(msg.meta);
+      } else if (msg.section === "simple") {
+        simpleText += msg.delta;
+        onSimpleDelta(simpleText);
+      } else if (msg.section === "detail") {
+        detailText += msg.delta;
+        onDetailDelta(detailText);
+      } else if (msg.error) {
+        onError("La génération a été interrompue.");
+      } else if (msg.done) {
+        onDone({ text: simpleText, detailText });
+      }
+    });
+  } catch (e) {
+    onError("La connexion a été interrompue pendant la génération.");
+  }
+}
+
 /* ============ AVANT-GOÛT GRATUIT ============ */
 document.getElementById("preview-btn").addEventListener("click", async () => {
   const statusEl = document.getElementById("gate-status");
@@ -450,27 +552,30 @@ document.getElementById("preview-btn").addEventListener("click", async () => {
   }
   computedProfile = profile;
 
-  try {
-    const res = await fetch(WORKER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "preview", profile })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Erreur inconnue");
+  const previewTextEl = document.getElementById("preview-text");
+  let previewStarted = false;
 
-    document.getElementById("preview-text").innerHTML = data.text.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
-    document.getElementById("preview-block").style.display = "block";
-    document.getElementById("transition-block").style.display = "block";
-    document.getElementById("signup-step-1").style.display = "none";
-    document.getElementById("signup-step-2").style.display = "block";
-    statusEl.textContent = "";
-  } catch (e) {
-    statusEl.className = "status error";
-    statusEl.textContent = "Erreur : " + e.message;
-  } finally {
-    btn.disabled = false;
-  }
+  await requestPreview(profile, {
+    onDelta: (fullTextSoFar) => {
+      if (!previewStarted) {
+        previewStarted = true;
+        document.getElementById("preview-block").style.display = "block";
+        statusEl.textContent = "";
+      }
+      previewTextEl.innerHTML = fullTextSoFar.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
+    },
+    onDone: () => {
+      document.getElementById("transition-block").style.display = "block";
+      document.getElementById("signup-step-1").style.display = "none";
+      document.getElementById("signup-step-2").style.display = "block";
+      btn.disabled = false;
+    },
+    onError: (message) => {
+      statusEl.className = "status error";
+      statusEl.textContent = "Erreur : " + message;
+      btn.disabled = false;
+    }
+  });
 });
 
 /* ============ INSCRIPTION ============ */
@@ -535,40 +640,50 @@ document.getElementById("login-btn").addEventListener("click", async () => {
   statusEl.className = "status";
   statusEl.textContent = "Connexion…";
 
-  try {
-    const res = await fetch(WORKER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "reading", username, password })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Erreur inconnue");
+  let simpleText = "";
+  let detailText = "";
+  let switchedToApp = false;
 
-    sessionUsername = username;
-    sessionPassword = password;
-    currentReadingText = data.text + (data.detailText ? "\n\n" + data.detailText : "");
+  await requestReading({ username, password }, {
+    onMeta: (meta) => {
+      switchedToApp = true;
+      sessionUsername = username;
+      sessionPassword = password;
 
-    document.getElementById("gate").style.display = "none";
-    document.getElementById("app").style.display = "block";
-    document.getElementById("app-greeting").textContent = "Bonjour";
-    document.getElementById("app-date").textContent = new Date(data.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-    document.getElementById("num-month").textContent = data.numerology.personalMonth;
-    document.getElementById("num-month-theme").textContent = data.numerology.monthTheme;
-    document.getElementById("num-day").textContent = data.numerology.personalDay;
-    document.getElementById("moon-sign").textContent = data.moonSign;
-    document.getElementById("moon-phase").textContent = data.moonPhase;
-    document.getElementById("reading").innerHTML = data.text.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
-    if (data.detailText) {
-      document.getElementById("reading-detail-content").innerHTML = data.detailText.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
+      document.getElementById("gate").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      document.getElementById("app-greeting").textContent = "Bonjour";
+      document.getElementById("app-date").textContent = new Date(meta.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      document.getElementById("num-month").textContent = meta.numerology.personalMonth;
+      document.getElementById("num-month-theme").textContent = meta.numerology.monthTheme;
+      document.getElementById("num-day").textContent = meta.numerology.personalDay;
+      document.getElementById("moon-sign").textContent = meta.moonSign;
+      document.getElementById("moon-phase").textContent = meta.moonPhase;
+    },
+    onSimpleDelta: (soFar) => {
+      simpleText = soFar;
+      document.getElementById("reading").innerHTML = soFar.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
+    },
+    onDetailDelta: (soFar) => {
+      detailText = soFar;
+      document.getElementById("reading-detail-content").innerHTML = soFar.split(/\n\n+/).map(p => `<p>${p}</p>`).join("");
       document.getElementById("reading-detail").style.display = "block";
+    },
+    onDone: () => {
+      currentReadingText = simpleText + (detailText ? "\n\n" + detailText : "");
+      document.getElementById("explore-section").style.display = "block";
+      btn.disabled = false;
+    },
+    onError: (message) => {
+      if (switchedToApp) {
+        document.getElementById("app").style.display = "none";
+        document.getElementById("gate").style.display = "block";
+      }
+      statusEl.className = "status error";
+      statusEl.textContent = "Erreur : " + message;
+      btn.disabled = false;
     }
-    document.getElementById("explore-section").style.display = "block";
-  } catch (e) {
-    statusEl.className = "status error";
-    statusEl.textContent = "Erreur : " + e.message;
-  } finally {
-    btn.disabled = false;
-  }
+  });
 });
 
 function renderChatMessage(role, text) {
