@@ -278,6 +278,7 @@
       <textarea class="chat-textarea" id="chat-input" placeholder="Écris ici ce que tu aimerais mieux comprendre dans ton énergie du jour ou dans ce que tu vis actuellement."></textarea>
       <button class="primary" id="chat-send">Envoyer</button>
     </div>
+    <div id="followup-quota" class="followup-quota"></div>
   </section>
 
   <div class="account-footer">
@@ -286,11 +287,57 @@
   </div>
 </div>
 
+<div id="purchase-modal" class="purchase-modal" hidden>
+  <div class="purchase-box" role="dialog" aria-modal="true" aria-labelledby="purchase-title">
+    <button type="button" class="purchase-close" id="purchase-close" aria-label="Fermer">×</button>
+    <div class="ornament">✦ ✦ ✦</div>
+    <h2 class="purchase-title" id="purchase-title"></h2>
+    <p class="purchase-message" id="purchase-message"></p>
+    <div class="purchase-offers" id="purchase-offers"></div>
+    <div class="purchase-checkout" id="purchase-checkout" hidden>
+      <p>La page de paiement s'est ouverte dans un nouvel onglet. Reviens ici une fois le paiement terminé.</p>
+      <a href="#" target="_blank" rel="noopener" id="purchase-checkout-link">Ouvrir la page de paiement</a>
+      <button type="button" class="primary" id="purchase-checkout-done">J'ai terminé mon paiement</button>
+    </div>
+    <div class="status" id="purchase-status"></div>
+    <p class="purchase-note" id="purchase-note"></p>
+  </div>
+</div>
+
 <style>
   .account-footer { text-align: center; padding: 30px 20px 10px; font-family: 'Raleway', sans-serif; font-size: 12px; }
   .account-footer a { color: var(--ink-dim); text-decoration: underline; cursor: pointer; }
   .account-footer a:hover { color: var(--gold); }
   #account-status { display: block; color: var(--wine); margin-bottom: 6px; }
+
+  .followup-quota { margin-top: 14px; font-size: 12.5px; color: var(--ink-dim); line-height: 1.5; }
+  .followup-quota.ok { color: var(--teal); }
+  .followup-quota a { color: var(--gold); text-decoration: underline; cursor: pointer; }
+
+  .purchase-modal { position: fixed; inset: 0; z-index: 100; background: rgba(58,53,47,0.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .purchase-modal[hidden] { display: none; }
+  .purchase-box {
+    position: relative; width: 100%; max-width: 420px; max-height: calc(100vh - 32px); overflow-y: auto;
+    background: var(--card); border-radius: 18px; padding: 36px 28px 28px;
+    box-shadow: 0 12px 40px rgba(200,169,110,0.25); border: 1px solid rgba(200,169,110,0.22);
+  }
+  .purchase-close { position: absolute; top: 10px; right: 14px; background: none; border: none; font-size: 24px; color: var(--ink-dim); cursor: pointer; }
+  .purchase-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500; font-size: 26px; text-align: center; margin: 0 0 12px; color: var(--ink); }
+  .purchase-message { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.55; text-align: center; margin: 0 0 20px; color: var(--ink); }
+  .purchase-message:empty { display: none; }
+  .purchase-offers { display: flex; flex-direction: column; gap: 10px; }
+  .purchase-offer { display: block; width: 100%; text-align: left; background: var(--bg); border: 1px solid rgba(200,169,110,0.35); border-radius: 12px; padding: 14px 16px; cursor: pointer; font-family: 'Raleway', sans-serif; color: var(--ink); transition: border-color 0.2s ease; }
+  .purchase-offer:hover { border-color: var(--gold); }
+  .purchase-offer:disabled { opacity: 0.45; cursor: default; }
+  .purchase-offer .price { float: right; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; color: var(--gold); }
+  .purchase-offer .name { font-size: 13px; letter-spacing: 0.04em; }
+  .purchase-offer .validity { display: block; font-size: 11.5px; color: var(--ink-dim); margin-top: 4px; }
+  .purchase-checkout { margin-top: 18px; text-align: center; font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
+  .purchase-checkout[hidden] { display: none; }
+  .purchase-checkout p { margin: 0 0 8px; }
+  .purchase-checkout a { color: var(--gold); text-decoration: underline; }
+  .purchase-note { font-size: 11.5px; color: var(--ink-dim); text-align: center; line-height: 1.5; margin: 16px 0 0; }
+  .purchase-note:empty { display: none; }
 
   #reading-detail { margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(200,169,110,0.22); }
   #reading-detail summary {
@@ -692,6 +739,7 @@ document.getElementById("login-btn").addEventListener("click", async () => {
     onDone: () => {
       currentReadingText = simpleText + (detailText ? "\n\n" + detailText : "");
       document.getElementById("explore-section").style.display = "block";
+      refreshFollowupStatus().catch(() => {});
       btn.disabled = false;
     },
     onError: (message) => {
@@ -717,15 +765,20 @@ function renderChatMessage(role, text) {
   }
   container.appendChild(el);
   container.scrollTop = container.scrollHeight;
+  return el;
 }
+
+let chatInFlight = false;
 
 async function sendChatMessage() {
   const input = document.getElementById("chat-input");
   const sendBtn = document.getElementById("chat-send");
   const question = input.value.trim();
-  if (!question || !currentReadingText) return;
+  // La touche Entrée contourne le bouton désactivé : le verrou empêche un double envoi.
+  if (!question || !currentReadingText || chatInFlight) return;
+  chatInFlight = true;
 
-  renderChatMessage("user", question);
+  const userEl = renderChatMessage("user", question);
   input.value = "";
   sendBtn.disabled = true;
 
@@ -747,19 +800,341 @@ async function sendChatMessage() {
         history: chatHistory
       })
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 402 && data.code === "quota_exceeded") {
+      // La question n'a pas été traitée : on la rend à la personne pour qu'elle puisse la renvoyer après l'achat.
+      loadingEl.remove();
+      userEl.remove();
+      input.value = question;
+      followupQuota = Object.assign({}, followupQuota, { freeAvailable: false, creditsRemaining: 0 });
+      if (data.offers) followupOffers = data.offers;
+      renderFollowupQuota();
+      openPurchaseModal(data.popup);
+      return;
+    }
     if (!res.ok) throw new Error(data.error || "Erreur inconnue");
     loadingEl.remove();
     renderChatMessage("assistant", data.text);
     chatHistory.push({ role: "user", content: question });
     chatHistory.push({ role: "assistant", content: data.text });
+    refreshFollowupStatus().catch(() => {});
   } catch (e) {
     loadingEl.remove();
     renderChatMessage("assistant", "Impossible de répondre pour le moment, réessaie dans un instant.");
   } finally {
+    chatInFlight = false;
     sendBtn.disabled = false;
   }
 }
+
+/* ============ QUESTIONS DE SUIVI : QUOTA + ACHAT ============ */
+const STRIPE_PUBLISHABLE_KEY = "pk_live_51SpG1d2Mbk95tNpEQ5rZOl0OZsQ02cX3LODcC5zmmzfXyNInNF3OxumM8eJMOTCO5rRNGv9M1bZrxRbSBE2kYw4X00JTE1cLgx";
+
+let followupQuota = null;
+let followupOffers = null;
+let purchaseInFlight = false;
+// Une clé par offre, conservée tant que l'achat n'a pas abouti : un nouveau clic
+// (ou un nouvel essai après coupure réseau) renvoie la même clé, donc jamais de double débit.
+const purchaseKeys = {};
+// Renseigné pendant qu'un paiement Stripe Checkout est ouvert dans un autre onglet.
+let awaitingCheckout = null;
+let checkingCheckout = false;
+
+function newIdempotencyKey() {
+  if (window.crypto && crypto.randomUUID) return "fu-" + crypto.randomUUID();
+  return "fu-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 14);
+}
+
+function formatEuros(cents) {
+  return (cents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+}
+
+async function workerPost(body) {
+  const res = await fetch(WORKER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json().catch(() => ({}));
+  return { res, data };
+}
+
+async function refreshFollowupStatus() {
+  const { res, data } = await workerPost({ action: "followup_status", username: sessionUsername, password: sessionPassword });
+  if (!res.ok) throw new Error(data.error || "Erreur inconnue");
+  followupQuota = data.quota || null;
+  if (data.offers) followupOffers = data.offers;
+  renderFollowupQuota();
+  return followupQuota;
+}
+
+function renderFollowupQuota(okMessage) {
+  const el = document.getElementById("followup-quota");
+  el.className = "followup-quota" + (okMessage ? " ok" : "");
+  el.textContent = "";
+  if (okMessage) {
+    el.textContent = okMessage;
+    return;
+  }
+  if (!followupQuota) return;
+
+  const credits = followupQuota.creditsRemaining || 0;
+  if (followupQuota.freeAvailable) {
+    el.textContent = "Une question offerte t'attend.";
+  } else if (credits > 0) {
+    let text = credits === 1 ? "1 question de suivi restante" : credits + " questions de suivi restantes";
+    if (followupQuota.nextCreditExpiry) {
+      const expiry = new Date(followupQuota.nextCreditExpiry).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+      text += " (prochaine expiration le " + expiry + ")";
+    }
+    el.textContent = text + ".";
+  } else if (followupOffers) {
+    const link = document.createElement("a");
+    link.textContent = "Obtenir des questions de suivi";
+    link.addEventListener("click", (e) => { e.preventDefault(); openPurchaseModal(null); });
+    el.appendChild(link);
+  }
+}
+
+function setPurchaseStatus(text, kind) {
+  const el = document.getElementById("purchase-status");
+  el.className = "status" + (kind ? " " + kind : "");
+  el.textContent = text || "";
+}
+
+function setOfferButtonsDisabled(disabled) {
+  document.querySelectorAll("#purchase-offers .purchase-offer").forEach(b => { b.disabled = disabled; });
+}
+
+function openPurchaseModal(popup) {
+  // Le texte vient du Worker : textContent uniquement, jamais innerHTML.
+  document.getElementById("purchase-title").textContent = (popup && popup.title) || "Questions de suivi";
+  document.getElementById("purchase-message").textContent = (popup && popup.message) || "";
+  document.getElementById("purchase-note").textContent = (popup && popup.resiliationNote) || "";
+
+  const offersEl = document.getElementById("purchase-offers");
+  offersEl.textContent = "";
+  ["single", "pack"].forEach(kind => {
+    const offer = followupOffers && followupOffers[kind];
+    if (!offer) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "purchase-offer";
+    const price = document.createElement("span");
+    price.className = "price";
+    price.textContent = formatEuros(offer.amount);
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = offer.questions === 1 ? "1 question" : offer.questions + " questions";
+    const validity = document.createElement("span");
+    validity.className = "validity";
+    validity.textContent = "Valable " + offer.validityDays + " jours";
+    btn.append(price, name, validity);
+    btn.addEventListener("click", () => purchaseFollowup(kind));
+    offersEl.appendChild(btn);
+  });
+
+  setPurchaseStatus(followupOffers ? "" : "Les offres sont momentanément indisponibles.", followupOffers ? "" : "error");
+  showCheckoutPanel(awaitingCheckout ? awaitingCheckout.url : null);
+  setOfferButtonsDisabled(purchaseInFlight || !!awaitingCheckout);
+  document.getElementById("purchase-modal").hidden = false;
+}
+
+function closePurchaseModal() {
+  // Si un paiement Checkout est en cours, on continue d'écouter le retour sur l'onglet.
+  document.getElementById("purchase-modal").hidden = true;
+}
+
+function showCheckoutPanel(url) {
+  const panel = document.getElementById("purchase-checkout");
+  panel.hidden = !url;
+  if (url) document.getElementById("purchase-checkout-link").href = url;
+}
+
+async function purchaseFollowup(kind) {
+  if (purchaseInFlight || awaitingCheckout) return;
+  purchaseInFlight = true;
+  setOfferButtonsDisabled(true);
+  setPurchaseStatus("Paiement en cours…");
+
+  if (!purchaseKeys[kind]) purchaseKeys[kind] = newIdempotencyKey();
+  const creditsBefore = (followupQuota && followupQuota.creditsRemaining) || 0;
+
+  try {
+    const { res, data } = await workerPost({
+      action: "purchase_followup",
+      username: sessionUsername,
+      password: sessionPassword,
+      kind,
+      idempotencyKey: purchaseKeys[kind]
+    });
+    await handlePurchaseResponse(res, data, kind, creditsBefore);
+  } catch (e) {
+    // Coupure réseau : on garde la clé, un nouvel essai ne pourra pas débiter deux fois.
+    setPurchaseStatus("La connexion a été interrompue. Tu peux réessayer sans risque de double paiement.", "error");
+  } finally {
+    purchaseInFlight = false;
+    if (!awaitingCheckout) setOfferButtonsDisabled(false);
+  }
+}
+
+// Pauses entre deux lectures de followup_status.
+const WEBHOOK_DELAYS = [1500, 1500, 1500];
+const CHECKOUT_RETURN_DELAYS = [1500, 1500];
+// Paiement « processing » : pauses croissantes, 30 s d'attente au total.
+const PROCESSING_DELAYS = [1000, 2000, 3000, 5000, 8000, 11000];
+
+async function handlePurchaseResponse(res, data, kind, creditsBefore) {
+  // `status` décrit l'issue du paiement ; `code` n'est présent que sur les erreurs (ex. card_declined).
+  const status = data.status;
+
+  // Pas de carte enregistrée réutilisable : paiement sur Stripe Checkout, dans un nouvel onglet.
+  if (status === "checkout_required") {
+    const url = data.checkoutUrl || data.url;
+    if (!url) throw new Error("Lien de paiement manquant");
+    startCheckout(url, kind, creditsBefore);
+    return;
+  }
+
+  // La banque demande une authentification (3D Secure) : Stripe.js l'affiche sur la page.
+  if (status === "requires_action" && data.clientSecret) {
+    setPurchaseStatus("Validation auprès de ta banque…");
+    const stripe = await loadStripe();
+    const result = await stripe.confirmCardPayment(
+      data.clientSecret,
+      data.paymentMethodId ? { payment_method: data.paymentMethodId } : undefined
+    );
+    if (result.error) {
+      delete purchaseKeys[kind];
+      setPurchaseStatus(result.error.message || "Le paiement n'a pas été validé.", "error");
+      return;
+    }
+    if (result.paymentIntent && result.paymentIntent.status === "processing") {
+      await waitForProcessing(kind, creditsBefore);
+      return;
+    }
+    await waitForCredits(creditsBefore, WEBHOOK_DELAYS);
+    onPurchaseCompleted(kind);
+    return;
+  }
+
+  // Paiement accepté mais encore en cours de traitement côté banque.
+  if (status === "processing") {
+    await waitForProcessing(kind, creditsBefore);
+    return;
+  }
+
+  if (res.ok) {
+    if (data.quota) {
+      followupQuota = data.quota;
+    } else {
+      await waitForCredits(creditsBefore, WEBHOOK_DELAYS);
+    }
+    onPurchaseCompleted(kind);
+    return;
+  }
+
+  // Refus définitif (carte refusée, offre invalide…) : un nouvel essai doit être un nouvel achat.
+  if (res.status < 500) delete purchaseKeys[kind];
+  const message = data.code === "card_declined"
+    ? "Ta carte a été refusée. Tu peux réessayer avec un autre moyen de paiement."
+    : "Erreur : " + (data.error || "le paiement n'a pas abouti.");
+  setPurchaseStatus(message, "error");
+}
+
+async function waitForProcessing(kind, creditsBefore) {
+  setPurchaseStatus("Ta banque traite le paiement, quelques secondes de patience…");
+  if (await waitForCredits(creditsBefore, PROCESSING_DELAYS)) {
+    onPurchaseCompleted(kind);
+    return;
+  }
+  // On garde la clé d'idempotence : un nouveau clic renverra le même paiement, sans second débit.
+  setPurchaseStatus("Ton paiement est toujours en cours de traitement. Tes questions apparaîtront dès qu'il sera confirmé, tu n'as rien à refaire.");
+}
+
+// Les crédits sont ajoutés par le webhook Stripe, parfois quelques secondes après le paiement.
+// Lit followup_status, puis réessaie après chaque pause de `delays`.
+async function waitForCredits(creditsBefore, delays) {
+  for (let i = 0; i <= delays.length; i++) {
+    try {
+      const quota = await refreshFollowupStatus();
+      if (quota && (quota.creditsRemaining || 0) > creditsBefore) return true;
+    } catch (e) { /* on réessaie */ }
+    if (i < delays.length) await new Promise(r => setTimeout(r, delays[i]));
+  }
+  return false;
+}
+
+function onPurchaseCompleted(kind) {
+  delete purchaseKeys[kind];
+  awaitingCheckout = null;
+  showCheckoutPanel(null);
+  setOfferButtonsDisabled(false);
+  setPurchaseStatus("");
+  closePurchaseModal();
+  renderFollowupQuota("C'est fait : tes questions de suivi sont disponibles.");
+  setTimeout(() => renderFollowupQuota(), 6000);
+  const input = document.getElementById("chat-input");
+  if (input.value.trim()) input.focus();
+}
+
+function startCheckout(url, kind, creditsBefore) {
+  awaitingCheckout = { url, kind, creditsBefore };
+  setOfferButtonsDisabled(true);
+  showCheckoutPanel(url);
+  setPurchaseStatus("");
+  // Ouvert après un appel réseau, l'onglet peut être bloqué (Safari/iOS) :
+  // le lien du panneau reste alors cliquable par la personne.
+  const win = window.open(url, "_blank");
+  if (win) {
+    win.opener = null;
+  } else {
+    setPurchaseStatus("Touche « Ouvrir la page de paiement » pour continuer.");
+  }
+}
+
+async function checkCheckoutCompletion(delays) {
+  if (!awaitingCheckout || checkingCheckout) return;
+  checkingCheckout = true;
+  setPurchaseStatus("Vérification du paiement…");
+  try {
+    const { kind, creditsBefore } = awaitingCheckout;
+    if (await waitForCredits(creditsBefore, delays)) {
+      onPurchaseCompleted(kind);
+    } else {
+      setPurchaseStatus("Paiement pas encore confirmé. Si tu viens de payer, patiente quelques secondes puis touche « J'ai terminé mon paiement ».");
+    }
+  } finally {
+    checkingCheckout = false;
+  }
+}
+
+let stripePromise = null;
+function loadStripe() {
+  if (!stripePromise) {
+    stripePromise = new Promise((resolve, reject) => {
+      if (window.Stripe) return resolve(window.Stripe(STRIPE_PUBLISHABLE_KEY));
+      const s = document.createElement("script");
+      s.src = "https://js.stripe.com/v3/";
+      s.onload = () => resolve(window.Stripe(STRIPE_PUBLISHABLE_KEY));
+      s.onerror = () => { stripePromise = null; reject(new Error("Stripe indisponible")); };
+      document.head.appendChild(s);
+    });
+  }
+  return stripePromise;
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && awaitingCheckout) checkCheckoutCompletion(CHECKOUT_RETURN_DELAYS);
+});
+document.getElementById("purchase-checkout-done").addEventListener("click", () => checkCheckoutCompletion(WEBHOOK_DELAYS));
+document.getElementById("purchase-close").addEventListener("click", closePurchaseModal);
+document.getElementById("purchase-modal").addEventListener("click", (e) => {
+  if (e.target.id === "purchase-modal") closePurchaseModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !document.getElementById("purchase-modal").hidden) closePurchaseModal();
+});
 
 document.getElementById("chat-send").addEventListener("click", sendChatMessage);
 document.getElementById("chat-input").addEventListener("keydown", e => {
