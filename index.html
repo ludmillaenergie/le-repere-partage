@@ -358,8 +358,6 @@
   #reading-detail-content p { margin: 0 0 14px; }
 
   #chat-messages { margin-bottom: 14px; }
-  /* Hauteur fixée au premier envoi : les réponses défilent à l'intérieur sans pousser le champ de saisie. */
-  #chat-messages.has-messages { height: min(60vh, 420px); overflow-y: auto; }
   .chat-msg { padding: 12px 14px; margin-bottom: 10px; border-radius: 10px; }
   .chat-msg.user { background: var(--bg); border-left: 3px solid var(--gold); font-size: 14px; color: var(--ink-dim); }
   .chat-msg.assistant { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.65; color: var(--ink); padding-left: 2px; }
@@ -797,7 +795,6 @@ async function sendChatMessage() {
   // La touche Entrée contourne le bouton désactivé : le verrou empêche un double envoi.
   if (!question || !currentReadingText || chatInFlight) return;
   chatInFlight = true;
-  document.getElementById("chat-messages").classList.add("has-messages");
 
   const userEl = renderChatMessage("user", question);
   input.value = "";
@@ -826,8 +823,6 @@ async function sendChatMessage() {
       // La question n'a pas été traitée : on la rend à la personne pour qu'elle puisse la renvoyer après l'achat.
       loadingEl.remove();
       userEl.remove();
-      const messagesEl = document.getElementById("chat-messages");
-      if (!messagesEl.children.length) messagesEl.classList.remove("has-messages");
       input.value = question;
       followupQuota = Object.assign({}, followupQuota, { freeAvailable: false, creditsRemaining: 0 });
       if (data.offers) followupOffers = data.offers;
