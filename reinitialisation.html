@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nouveau mot de passe · Le Repère</title>
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Raleway:wght@300;400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #faf6ef;
+    --bg-deep: #f2ead9;
+    --card: #ffffff;
+    --gold: #c8a96e;
+    --ink: #3a352f;
+    --ink-dim: #8a8072;
+    --teal: #5b8a7d;
+    --wine: #a25a5e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: linear-gradient(160deg, var(--bg) 0%, var(--bg-deep) 100%);
+    color: var(--ink);
+    font-family: 'Raleway', sans-serif;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .gate-box {
+    width: 100%; max-width: 400px;
+    background: var(--card);
+    border-radius: 18px;
+    padding: 44px 36px;
+    box-shadow: 0 12px 40px rgba(200, 169, 110, 0.18);
+    border: 1px solid rgba(200, 169, 110, 0.22);
+  }
+  .ornament { font-size: 22px; color: var(--gold); text-align: center; letter-spacing: 6px; margin-bottom: 8px; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.3em; color: var(--gold); text-transform: uppercase; margin-bottom: 14px; text-align: center; }
+  h1.gate-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500; font-size: 32px; margin: 0 0 24px; text-align: center; color: var(--ink); }
+  .intro { font-family: 'Cormorant Garamond', serif; font-size: 18px; line-height: 1.5; text-align: center; margin: 0 0 24px; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .field label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); }
+  .field input {
+    background: var(--bg); border: 1px solid rgba(200,169,110,0.35); color: var(--ink);
+    font-family: 'Raleway', sans-serif; font-size: 14px; padding: 12px 14px; border-radius: 8px; outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .field input:focus { border-color: var(--gold); }
+  .field .hint { font-size: 11px; color: var(--gold); font-style: italic; font-family: 'Cormorant Garamond', serif; }
+
+  button.primary, a.primary {
+    display: block; width: 100%; background: var(--gold); border: none; color: #ffffff; text-align: center; text-decoration: none;
+    font-family: 'Raleway', sans-serif; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 14px 26px; border-radius: 30px; cursor: pointer; margin-top: 10px;
+    transition: all 0.25s ease;
+  }
+  button.primary:hover, a.primary:hover { background: #b8975a; transform: translateY(-1px); }
+  button.primary:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+  .status { font-size: 13px; color: var(--ink-dim); font-style: italic; margin-top: 14px; min-height: 18px; text-align: center; line-height: 1.5; }
+  .status.error { color: var(--wine); font-style: normal; }
+  .status.ok { color: var(--teal); font-style: normal; }
+
+  .etape { display: none; }
+  .etape.visible { display: block; }
+
+  .signature { margin-top: 30px; text-align: center; font-family: 'Allura', cursive; font-size: 26px; color: var(--gold); }
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+</head>
+<body>
+
+<div class="gate-box">
+  <div class="ornament">✦</div>
+  <div class="eyebrow">Le Repère</div>
+  <h1 class="gate-title">Nouveau mot de passe</h1>
+
+  <section class="etape visible" id="etape-verification">
+    <p class="status">Vérification du lien…</p>
+  </section>
+
+  <section class="etape" id="etape-formulaire">
+    <p class="intro">Choisis ton nouveau mot de passe pour le compte <strong id="nom-compte"></strong>.</p>
+    <input type="text" id="identifiant" autocomplete="username" hidden>
+    <div class="field">
+      <label for="mdp">Nouveau mot de passe</label>
+      <input type="password" id="mdp" autocomplete="new-password">
+      <span class="hint">8 caractères minimum</span>
+    </div>
+    <div class="field">
+      <label for="mdp2">Le même, une deuxième fois</label>
+      <input type="password" id="mdp2" autocomplete="new-password">
+    </div>
+    <button class="primary" id="valider-btn">Enregistrer</button>
+    <p class="status" id="statut"></p>
+  </section>
+
+  <section class="etape" id="etape-fini">
+    <p class="intro">C'est fait. Ton nouveau mot de passe est enregistré.</p>
+    <a class="primary" href="/">Se connecter au Repère</a>
+  </section>
+
+  <section class="etape" id="etape-invalide">
+    <p class="intro">Ce lien n'est plus valable. Il a peut-être déjà servi, ou l'heure est passée.</p>
+    <p class="status">Pour en recevoir un nouveau, il suffit d'écrire à Ludmilla Énergie.</p>
+  </section>
+
+  <div class="signature">Ludmilla Énergie</div>
+</div>
+
+<script>
+const WORKER_URL = "https://le-repere-partage.ludmillaenergie.workers.dev";
+
+// Le jeton arrive après le # du lien : on le lit puis on l'efface de la barre d'adresse
+const jeton = new URLSearchParams(location.hash.slice(1)).get("jeton") || "";
+if (location.hash) history.replaceState(null, "", location.pathname);
+
+function montrer(id) {
+  document.querySelectorAll(".etape").forEach(e => e.classList.toggle("visible", e.id === id));
+}
+
+async function appelWorker(donnees) {
+  const res = await fetch(WORKER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(donnees)
+  });
+  const data = await res.json().catch(() => ({}));
+  return { res, data };
+}
+
+async function verifierLien() {
+  if (!jeton) { montrer("etape-invalide"); return; }
+  try {
+    const { data } = await appelWorker({ action: "reset_status", token: jeton });
+    if (!data.valid) { montrer("etape-invalide"); return; }
+    document.getElementById("nom-compte").textContent = data.username;
+    document.getElementById("identifiant").value = data.username;
+    montrer("etape-formulaire");
+    document.getElementById("mdp").focus();
+  } catch (e) {
+    document.querySelector("#etape-verification .status").textContent = "Connexion impossible pour l'instant. Réessaie dans un moment en rouvrant le lien du mail.";
+  }
+}
+
+document.getElementById("valider-btn").addEventListener("click", async () => {
+  const statut = document.getElementById("statut");
+  const btn = document.getElementById("valider-btn");
+  const mdp = document.getElementById("mdp").value;
+  const mdp2 = document.getElementById("mdp2").value;
+
+  if (mdp.length < 8) {
+    statut.className = "status error";
+    statut.textContent = "Le mot de passe doit faire au moins 8 caractères.";
+    return;
+  }
+  if (mdp !== mdp2) {
+    statut.className = "status error";
+    statut.textContent = "Les deux mots de passe ne sont pas identiques.";
+    return;
+  }
+
+  btn.disabled = true;
+  statut.className = "status";
+  statut.textContent = "Enregistrement…";
+
+  try {
+    const { res, data } = await appelWorker({ action: "reset_password", token: jeton, password: mdp });
+    if (res.ok && data.ok) {
+      montrer("etape-fini");
+      return;
+    }
+    if (data.raison === "lien_invalide" || data.raison === "compte_introuvable") {
+      montrer("etape-invalide");
+      return;
+    }
+    statut.className = "status error";
+    statut.textContent = data.error || "Une erreur est survenue, réessaie.";
+  } catch (e) {
+    statut.className = "status error";
+    statut.textContent = "La connexion a été interrompue. Réessaie dans un instant.";
+  }
+  btn.disabled = false;
+});
+
+document.getElementById("mdp2").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("valider-btn").click();
+});
+
+verifierLien();
+</script>
+
+</body>
+</html>
