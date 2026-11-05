@@ -95,6 +95,7 @@
   .signup-promise-sub + .signup-promise-sub { margin-top: 10px; }
   .invite-banner { display: none; border: 1px solid var(--gold); border-radius: 6px; padding: 12px 14px; margin: 0 0 22px; font-size: 13.5px; line-height: 1.5; color: var(--ink); text-align: center; }
   .invite-banner strong { color: var(--gold); font-weight: 600; }
+  .confidentiality-note a { color: var(--gold); text-decoration: underline; }
   .confidentiality-note { font-size: 14px; color: var(--ink); font-style: italic; font-family: 'Cormorant Garamond', serif; margin: -6px 0 18px; line-height: 1.4; }
   .reassurance { text-align: center; font-size: 14px; color: var(--ink); font-style: italic; font-family: 'Cormorant Garamond', serif; margin-top: 12px; line-height: 1.4; }
 
@@ -181,7 +182,7 @@
           <label for="s-name">Prénom</label>
           <input type="text" id="s-name">
         </div>
-        <p class="confidentiality-note">Tes informations permettent de créer une lecture qui part réellement de toi. Elles restent confidentielles.</p>
+        <p class="confidentiality-note">Tes informations permettent de créer une lecture qui part réellement de toi. Elles restent confidentielles. <a href="confidentialite.html" target="_blank" rel="noopener">Voir comment elles sont gardées</a>.</p>
         <div class="field-row">
           <div class="field">
             <label for="s-date">Date de naissance</label>
@@ -303,6 +304,7 @@
     <div class="title">Recevoir ma lecture en notification</div>
     <p class="push-text" id="push-text">Une petite notification à 7 h 30 pour te dire que ton énergie du jour est prête.</p>
     <button type="button" class="primary" id="push-enable">Me prévenir chaque matin</button>
+    <p class="push-privacy">Ton téléphone est reconnu par un identifiant technique, rien d'autre. Aucun texte personnel ne passe par la notification. Tu peux l'arrêter quand tu veux.</p>
     <div class="status" id="push-status"></div>
   </section>
 
@@ -310,6 +312,8 @@
     <span id="account-status"></span>
     <span id="push-footer" style="display:none;">Notification du matin activée · <a href="#" id="push-disable">Ne plus la recevoir</a></span>
     <a href="#" id="manage-subscription-link">Gérer mon abonnement</a>
+    <span class="footer-sep">·</span>
+    <a href="confidentialite.html" target="_blank" rel="noopener">Confidentialité</a>
   </div>
 </div>
 
@@ -332,6 +336,8 @@
 
 <style>
   .push-text { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.55; color: var(--ink); margin: 0 0 16px; }
+  .push-privacy { font-size: 12.5px; line-height: 1.5; color: var(--ink-dim); margin: 14px 0 0; text-align: center; }
+  .footer-sep { color: var(--ink-dim); margin: 0 4px; }
   #push-footer { display: block; margin-bottom: 8px; color: var(--ink-dim); }
   .account-footer { text-align: center; padding: 30px 20px 10px; font-family: 'Raleway', sans-serif; font-size: 12px; }
   .account-footer a { color: var(--ink-dim); text-decoration: underline; cursor: pointer; }
