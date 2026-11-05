@@ -664,6 +664,27 @@ document.getElementById("preview-btn").addEventListener("click", async () => {
 });
 
 /* ============ INSCRIPTION ============ */
+// Lien d'invitation : lit #invite=<code> au chargement (non affiché à l'écran).
+const INVITE_ERROR_MESSAGE = "Lien d'invitation invalide ou expiré";
+// Le code est retiré de la barre d'adresse dès l'ouverture (il ne reste ni dans l'historique
+// ni dans un éventuel partage d'écran), et gardé pour cet onglet seulement, au cas où la page
+// serait rechargée avant la fin de l'inscription.
+const INVITE_STORAGE_KEY = "repere_invite_code";
+const inviteCode = (() => {
+  const match = window.location.hash.match(/^#invite=(.+)$/);
+  if (!match) {
+    try { return sessionStorage.getItem(INVITE_STORAGE_KEY) || null; } catch (e) { return null; }
+  }
+  let code = match[1];
+  try { code = decodeURIComponent(code); } catch (e) { /* garde le code brut */ }
+  code = code.replace(/^invite:/, "").trim();
+  try { history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) { /* sans effet */ }
+  if (code) {
+    try { sessionStorage.setItem(INVITE_STORAGE_KEY, code); } catch (e) { /* sans effet */ }
+  }
+  return code || null;
+})();
+
 document.getElementById("signup-btn").addEventListener("click", async () => {
   const statusEl = document.getElementById("gate-status");
   const btn = document.getElementById("signup-btn");
@@ -683,12 +704,20 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
   statusEl.textContent = "Création du compte…";
 
   try {
+    const payload = { action: "signup_intent", username, password, profile: computedProfile };
+    if (inviteCode) payload.inviteCode = inviteCode;
+
     const res = await fetch(WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "signup_intent", username, password, profile: computedProfile })
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
+    if (res.status === 400 && data.error === INVITE_ERROR_MESSAGE) {
+      statusEl.className = "status error";
+      statusEl.textContent = INVITE_ERROR_MESSAGE;
+      return;
+    }
     if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
     statusEl.className = "status ok";
