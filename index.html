@@ -261,12 +261,12 @@
       <div class="num-item">
         <div class="n" id="moon-sign">–</div>
         <div class="l">Lune du jour</div>
-        <div class="t">Tonalité émotionnelle du jour</div>
+        <div class="t" id="moon-sign-theme">Tonalité émotionnelle du jour</div>
       </div>
       <div class="num-item">
         <div class="n" id="moon-phase" style="font-size: 22px;">–</div>
         <div class="l">Phase lunaire</div>
-        <div class="t">Où en est le cycle en ce moment</div>
+        <div class="t" id="moon-phase-theme">Où en est le cycle en ce moment</div>
       </div>
     </div>
   </section>
@@ -805,6 +805,32 @@ document.getElementById("login-btn").addEventListener("click", async () => {
       })[meta.numerology.personalDay] || "Résonance du jour, dans le mois en cours";
       document.getElementById("moon-sign").textContent = meta.moonSign;
       document.getElementById("moon-phase").textContent = meta.moonPhase;
+      const moonSignThemes = {
+        "Bélier": "Émotions vives, besoin d'agir",
+        "Taureau": "Besoin de calme, de confort, de stabilité",
+        "Gémeaux": "Esprit agité, besoin de parler et de bouger",
+        "Cancer": "Sensibilité à fleur de peau, besoin de cocon",
+        "Lion": "Besoin d'être vue, chaleur, générosité",
+        "Vierge": "Besoin de mettre de l'ordre, de bien faire",
+        "Balance": "Besoin d'harmonie, de douceur dans les liens",
+        "Scorpion": "Émotions profondes, intenses, qui remontent",
+        "Sagittaire": "Envie de large, d'optimisme, de liberté",
+        "Capricorne": "Retenue, sérieux, besoin de tenir",
+        "Verseau": "Besoin de recul, d'espace, de liberté",
+        "Poissons": "Sensibilité, intuition, besoin de rêver"
+      };
+      const moonPhaseThemes = {
+        "Nouvelle Lune": "Un cycle commence, on pose une intention",
+        "Premier Croissant": "Premiers élans, ça se met en route",
+        "Premier Quartier": "Un cap à franchir, on passe à l'action",
+        "Lune Gibbeuse Croissante": "On ajuste et on affine avant la pleine lune",
+        "Pleine Lune": "Tout est au plus fort, ça se révèle",
+        "Lune Gibbeuse Décroissante": "On récolte, on partage ce qu'on a compris",
+        "Dernier Quartier": "On fait le tri, on lâche ce qui ne sert plus",
+        "Dernier Croissant": "Temps de repos, on clôt avant de recommencer"
+      };
+      document.getElementById("moon-sign-theme").textContent = moonSignThemes[meta.moonSign] || "Tonalité émotionnelle du jour";
+      document.getElementById("moon-phase-theme").textContent = moonPhaseThemes[meta.moonPhase] || "Où en est le cycle en ce moment";
     },
     onSimpleDelta: (soFar) => {
       simpleText = soFar;
