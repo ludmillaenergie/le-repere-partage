@@ -256,7 +256,7 @@
       <div class="num-item">
         <div class="n" id="num-day">–</div>
         <div class="l">Jour personnel</div>
-        <div class="t">Résonance du jour, dans le mois en cours</div>
+        <div class="t" id="num-day-theme">–</div>
       </div>
       <div class="num-item">
         <div class="n" id="moon-sign">–</div>
@@ -792,6 +792,17 @@ document.getElementById("login-btn").addEventListener("click", async () => {
       document.getElementById("num-month").textContent = meta.numerology.personalMonth;
       document.getElementById("num-month-theme").textContent = meta.numerology.monthTheme;
       document.getElementById("num-day").textContent = meta.numerology.personalDay;
+      document.getElementById("num-day-theme").textContent = ({
+        1: "Initiative, premier pas, élan",
+        2: "Écoute, douceur, coopération",
+        3: "Expression, créativité, légèreté",
+        4: "Concret, ordre, avancer pas à pas",
+        5: "Mouvement, imprévu, changement",
+        6: "Foyer, soin, harmonie",
+        7: "Recul, silence, intériorité",
+        8: "Décision, action, concrétiser",
+        9: "Lâcher, clore, pardonner"
+      })[meta.numerology.personalDay] || "Résonance du jour, dans le mois en cours";
       document.getElementById("moon-sign").textContent = meta.moonSign;
       document.getElementById("moon-phase").textContent = meta.moonPhase;
     },
