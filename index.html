@@ -134,6 +134,11 @@
 <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
 <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c8a96e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Le Repère">
 </head>
 <body>
 
@@ -293,8 +298,17 @@
     <div id="followup-quota" class="followup-quota"></div>
   </section>
 
+  <section class="block" id="push-section" style="display:none;">
+    <div class="label">Chaque matin</div>
+    <div class="title">Recevoir ma lecture en notification</div>
+    <p class="push-text" id="push-text">Une petite notification à 7 h 30 pour te dire que ton énergie du jour est prête.</p>
+    <button type="button" class="primary" id="push-enable">Me prévenir chaque matin</button>
+    <div class="status" id="push-status"></div>
+  </section>
+
   <div class="account-footer">
     <span id="account-status"></span>
+    <span id="push-footer" style="display:none;">Notification du matin activée · <a href="#" id="push-disable">Ne plus la recevoir</a></span>
     <a href="#" id="manage-subscription-link">Gérer mon abonnement</a>
   </div>
 </div>
@@ -317,6 +331,8 @@
 </div>
 
 <style>
+  .push-text { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.55; color: var(--ink); margin: 0 0 16px; }
+  #push-footer { display: block; margin-bottom: 8px; color: var(--ink-dim); }
   .account-footer { text-align: center; padding: 30px 20px 10px; font-family: 'Raleway', sans-serif; font-size: 12px; }
   .account-footer a { color: var(--ink-dim); text-decoration: underline; cursor: pointer; }
   .account-footer a:hover { color: var(--gold); }
@@ -789,6 +805,7 @@ document.getElementById("login-btn").addEventListener("click", async () => {
 
       document.getElementById("gate").style.display = "none";
       document.getElementById("app").style.display = "block";
+      initPushSection();
       document.getElementById("app-greeting").textContent = "Bonjour";
       document.getElementById("app-date").textContent = new Date(meta.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
       document.getElementById("num-month").textContent = meta.numerology.personalMonth;
@@ -954,6 +971,109 @@ function newIdempotencyKey() {
 
 function formatEuros(cents) {
   return (cents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+}
+
+/* ============ NOTIFICATION DU MATIN (7h30) ============ */
+function pushKeyToBytes(b64url) {
+  const pad = "=".repeat((4 - (b64url.length % 4)) % 4);
+  const raw = atob((b64url + pad).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(raw, c => c.charCodeAt(0));
+}
+
+async function initPushSection() {
+  const box = document.getElementById("push-section");
+  const btn = document.getElementById("push-enable");
+  const off = document.getElementById("push-disable");
+  const txt = document.getElementById("push-text");
+  const st = document.getElementById("push-status");
+  const defaultText = txt.textContent;
+
+  const ua = navigator.userAgent || "";
+  const isIos = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+  const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+
+  if (!supported) {
+    if (isIos && !standalone) {
+      txt.textContent = "Pour recevoir ta notification chaque matin sur iPhone : ouvre Le Repère dans Safari, touche le bouton Partager, puis « Sur l'écran d'accueil ». Ouvre ensuite Le Repère depuis cette nouvelle icône, et le bouton apparaîtra ici.";
+      btn.style.display = "none";
+      box.style.display = "block";
+    }
+    return;
+  }
+
+  const footerNote = document.getElementById("push-footer");
+  function render(active, justActivated) {
+    if (active) {
+      footerNote.style.display = "block";
+      if (justActivated) {
+        // Confirmation visible quelques secondes à l'endroit du bouton, puis le bloc s'efface.
+        box.style.display = "block";
+        txt.textContent = "C'est activé : tu recevras une notification chaque matin à 7 h 30.";
+        btn.style.display = "none";
+        setTimeout(() => { box.style.display = "none"; }, 4000);
+      } else {
+        box.style.display = "none";
+      }
+    } else {
+      footerNote.style.display = "none";
+      box.style.display = "block";
+      txt.textContent = defaultText;
+      btn.style.display = "";
+      btn.disabled = false;
+    }
+  }
+
+  let reg;
+  try {
+    reg = await navigator.serviceWorker.register("sw.js");
+    await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    render(!!existing && Notification.permission === "granted");
+  } catch (e) {
+    return; // navigateur sans prise en charge réelle : on ne montre rien
+  }
+
+  btn.onclick = async () => {
+    btn.disabled = true;
+    st.textContent = "";
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        st.textContent = "La notification n'a pas été autorisée. Tu pourras la réactiver dans les réglages de ton navigateur.";
+        btn.disabled = false;
+        return;
+      }
+      const k = await workerPost({ action: "push_key" });
+      if (!k.res.ok || !k.data.publicKey) throw new Error("clé");
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushKeyToBytes(k.data.publicKey) });
+      }
+      const r = await workerPost({ action: "push_subscribe", username: sessionUsername, password: sessionPassword, subscription: sub.toJSON() });
+      if (!r.res.ok) throw new Error(r.data.error || "enregistrement");
+      render(true, true);
+    } catch (e) {
+      st.textContent = "Impossible d'activer la notification pour le moment. Réessaie un peu plus tard.";
+      btn.disabled = false;
+    }
+  };
+
+  off.onclick = async (ev) => {
+    ev.preventDefault();
+    st.textContent = "";
+    try {
+      const sub = await reg.pushManager.getSubscription();
+      await workerPost({ action: "push_unsubscribe", username: sessionUsername, password: sessionPassword, endpoint: sub ? sub.endpoint : undefined });
+      if (sub) await sub.unsubscribe();
+      render(false);
+    } catch (e) {
+      // Le bloc est caché quand la notification est active : on le réaffiche pour que le message se voie.
+      box.style.display = "block";
+      btn.style.display = "none";
+      st.textContent = "Impossible de désactiver pour le moment. Réessaie un peu plus tard.";
+    }
+  };
 }
 
 async function workerPost(body) {
