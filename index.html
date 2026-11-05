@@ -149,15 +149,17 @@
     </div>
 
     <section id="login-fields">
+      <form id="login-form" method="post" action="#" autocomplete="on" onsubmit="return false;">
       <div class="field">
         <label for="l-username">Identifiant</label>
-        <input type="text" id="l-username" autocomplete="username">
+        <input type="text" id="l-username" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
       </div>
       <div class="field">
         <label for="l-password">Mot de passe</label>
-        <input type="password" id="l-password" autocomplete="current-password">
+        <input type="password" id="l-password" name="password" autocomplete="current-password">
       </div>
-      <button class="primary" id="login-btn">Entrer</button>
+      <button type="submit" class="primary" id="login-btn">Entrer</button>
+      </form>
     </section>
 
     <section id="signup-fields" class="visible">
