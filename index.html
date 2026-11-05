@@ -93,6 +93,8 @@
   .signup-promise { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500; font-size: 21px; line-height: 1.35; color: var(--ink); margin: 0 0 10px; }
   .signup-promise-sub { font-size: 13.5px; line-height: 1.5; color: var(--ink-dim); margin: 0; }
   .signup-promise-sub + .signup-promise-sub { margin-top: 10px; }
+  .invite-banner { display: none; border: 1px solid var(--gold); border-radius: 6px; padding: 12px 14px; margin: 0 0 22px; font-size: 13.5px; line-height: 1.5; color: var(--ink); text-align: center; }
+  .invite-banner strong { color: var(--gold); font-weight: 600; }
   .confidentiality-note { font-size: 14px; color: var(--ink); font-style: italic; font-family: 'Cormorant Garamond', serif; margin: -6px 0 18px; line-height: 1.4; }
   .reassurance { text-align: center; font-size: 14px; color: var(--ink); font-style: italic; font-family: 'Cormorant Garamond', serif; margin-top: 12px; line-height: 1.4; }
 
@@ -160,6 +162,7 @@
 
     <section id="signup-fields" class="visible">
       <div id="signup-step-1">
+        <div class="invite-banner" id="invite-banner" role="status"><strong>Invitation bêta reconnue.</strong><br>Ton premier mois est offert, aucune carte bancaire ne te sera demandée à l'inscription.</div>
         <div class="signup-intro">
           <p class="signup-promise">Comprendre ce que tu vis.<br>Savoir comment le traverser.</p>
           <p class="signup-promise-sub">Chaque jour, Le Repère t'aide à comprendre ce que tu traverses et à savoir s'il est temps d'agir, de ralentir ou de prendre du recul.</p>
@@ -226,7 +229,7 @@
           <div class="hint">8 caractères minimum</div>
         </div>
         <button class="primary" id="signup-btn">Accéder à mon Repère</button>
-        <div class="reassurance">Paiement sécurisé de 7,90&nbsp;€ par mois. Sans engagement.</div>
+        <div class="reassurance" id="signup-reassurance">Paiement sécurisé de 7,90&nbsp;€ par mois. Sans engagement.</div>
       </div>
     </section>
 
@@ -685,6 +688,23 @@ const inviteCode = (() => {
   return code || null;
 })();
 
+// Message visible dès l'arrivée : la personne sait avant de remplir le formulaire que le lien
+// a bien été reconnu (sinon, elle doit rouvrir le lien reçu plutôt que continuer).
+const INVITE_REASSURANCE_TEXT = "Invitation bêta : premier mois offert, sans carte bancaire.";
+function showInviteState(active) {
+  const banner = document.getElementById("invite-banner");
+  const reassurance = document.getElementById("signup-reassurance");
+  if (banner) banner.style.display = active ? "block" : "none";
+  if (reassurance && active) reassurance.textContent = INVITE_REASSURANCE_TEXT;
+  if (reassurance && !active) reassurance.textContent = "Paiement sécurisé de 7,90 € par mois. Sans engagement.";
+}
+showInviteState(!!inviteCode);
+// Si le lien est ouvert dans un onglet où la page est déjà affichée, seul le #invite=… change
+// et la page ne se recharge pas d'elle-même : on recharge pour lire le code.
+window.addEventListener("hashchange", () => {
+  if (/^#invite=/.test(window.location.hash)) window.location.reload();
+});
+
 document.getElementById("signup-btn").addEventListener("click", async () => {
   const statusEl = document.getElementById("gate-status");
   const btn = document.getElementById("signup-btn");
@@ -716,6 +736,7 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
     if (res.status === 400 && data.error === INVITE_ERROR_MESSAGE) {
       statusEl.className = "status error";
       statusEl.textContent = INVITE_ERROR_MESSAGE;
+      showInviteState(false);
       return;
     }
     if (!res.ok) throw new Error(data.error || "Erreur inconnue");
