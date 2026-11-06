@@ -99,6 +99,8 @@
   .gate-legal { text-align: center; margin-top: 14px; font-family: 'Raleway', sans-serif; font-size: 12px; }
   .gate-legal a { color: var(--ink-dim); text-decoration: underline; }
   .gate-legal a:hover { color: var(--gold); }
+  .signup-terms { text-align: center; font-size: 12.5px; line-height: 1.5; color: var(--ink-dim); margin: 14px 0 0; }
+  .signup-terms a { color: var(--gold); text-decoration: underline; }
   .confidentiality-note { font-size: 14px; color: var(--ink); font-style: italic; font-family: 'Cormorant Garamond', serif; margin: -6px 0 18px; line-height: 1.4; }
   .reassurance { text-align: center; font-size: 14px; color: var(--ink); font-style: italic; font-family: 'Cormorant Garamond', serif; margin-top: 12px; line-height: 1.4; }
 
@@ -239,6 +241,7 @@
           <input type="password" id="s-password" autocomplete="new-password">
           <div class="hint">8 caractères minimum</div>
         </div>
+        <p class="signup-terms">En continuant, tu acceptes les <a href="conditions-de-vente.html" target="_blank" rel="noopener">conditions de vente</a> et tu demandes que ton abonnement commence tout de suite.</p>
         <button class="primary" id="signup-btn">Accéder à mon Repère</button>
         <div class="reassurance" id="signup-reassurance">Paiement sécurisé de 7,90&nbsp;€ par mois. Sans engagement.</div>
       </div>
@@ -250,6 +253,8 @@
       <a href="confidentialite.html" target="_blank" rel="noopener">Confidentialité</a>
       <span class="footer-sep">·</span>
       <a href="mentions-legales.html" target="_blank" rel="noopener">Mentions légales</a>
+      <span class="footer-sep">·</span>
+      <a href="conditions-de-vente.html" target="_blank" rel="noopener">Conditions de vente</a>
     </div>
   </div>
 </div>
@@ -325,6 +330,8 @@
     <a href="confidentialite.html" target="_blank" rel="noopener">Confidentialité</a>
     <span class="footer-sep">·</span>
     <a href="mentions-legales.html" target="_blank" rel="noopener">Mentions légales</a>
+    <span class="footer-sep">·</span>
+    <a href="conditions-de-vente.html" target="_blank" rel="noopener">Conditions de vente</a>
   </div>
 </div>
 
@@ -334,6 +341,7 @@
     <div class="ornament">✦ ✦ ✦</div>
     <h2 class="purchase-title" id="purchase-title"></h2>
     <p class="purchase-message" id="purchase-message"></p>
+    <p class="signup-terms purchase-terms">En continuant, tu acceptes les <a href="conditions-de-vente.html" target="_blank" rel="noopener">conditions de vente</a> et tu demandes que tes questions soient disponibles tout de suite.</p>
     <div class="purchase-offers" id="purchase-offers"></div>
     <div class="purchase-checkout" id="purchase-checkout" hidden>
       <p>La page de paiement s'est ouverte dans un nouvel onglet. Reviens ici une fois le paiement terminé.</p>
@@ -370,6 +378,7 @@
   .purchase-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500; font-size: 26px; text-align: center; margin: 0 0 12px; color: var(--ink); }
   .purchase-message { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.55; text-align: center; margin: 0 0 20px; color: var(--ink); }
   .purchase-message:empty { display: none; }
+  .purchase-terms { margin: 0 0 14px; }
   .purchase-offers { display: flex; flex-direction: column; gap: 10px; }
   .purchase-offer { display: block; width: 100%; text-align: left; background: var(--bg); border: 1px solid rgba(200,169,110,0.35); border-radius: 12px; padding: 14px 16px; cursor: pointer; font-family: 'Raleway', sans-serif; color: var(--ink); transition: border-color 0.2s ease; }
   .purchase-offer:hover { border-color: var(--gold); }
