@@ -306,6 +306,7 @@
     </div>
     <div id="followup-quota" class="followup-quota"></div>
   </section>
+  <p class="chat-privacy">*Ta question est transmise à une IA pour te répondre. Évite d'y écrire des informations sur ta santé ou sur d'autres personnes.</p>
 
   <section class="block" id="push-section" style="display:none;">
     <div class="label">Chaque matin</div>
@@ -408,6 +409,8 @@
   }
   .chat-textarea:focus { border-color: var(--gold); }
   .chat-textarea::placeholder { color: var(--ink-dim); font-style: italic; }
+  .chat-privacy { font-size: 11.5px; line-height: 1.5; color: var(--ink-dim); margin: -6px 44px 24px; text-align: center; }
+  #explore-section[style*="none"] + .chat-privacy { display: none; }
   #chat-send { align-self: flex-start; padding: 11px 24px; margin-top: 0; }
 </style>
 <style>
@@ -1123,7 +1126,7 @@ function renderFollowupQuota(okMessage) {
 
   const credits = followupQuota.creditsRemaining || 0;
   if (followupQuota.freeAvailable) {
-    el.textContent = "Une question offerte t'attend.";
+    el.textContent = "Une question offerte t'attend.*";
   } else if (credits > 0) {
     let text = credits === 1 ? "1 question de suivi restante" : credits + " questions de suivi restantes";
     if (followupQuota.nextCreditExpiry) {
