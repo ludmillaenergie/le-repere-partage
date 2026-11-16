@@ -1025,12 +1025,21 @@ async function initPushSection() {
   const standalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
   const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
+  // Notifications impossibles ici : on explique pourquoi, à la place du bouton.
+  const iosMessage = "Pour recevoir la notification, ajoute Le Repère à ton écran d'accueil (Partager, puis « Sur l'écran d'accueil »), puis ouvre-le depuis son icône.";
+  const otherBrowserMessage = "Les notifications ne sont pas disponibles dans ce navigateur. Ouvre Le Repère dans Chrome pour les recevoir.";
+  function showUnavailable(message) {
+    txt.textContent = message;
+    btn.style.display = "none";
+    const privacyNote = box.querySelector(".push-privacy");
+    if (privacyNote) privacyNote.style.display = "none";
+    box.style.display = "block";
+  }
+
   if (!supported) {
-    if (isIos && !standalone) {
-      txt.textContent = "Pour recevoir ta notification chaque matin sur iPhone : ouvre Le Repère dans Safari, touche le bouton Partager, puis « Sur l'écran d'accueil ». Ouvre ensuite Le Repère depuis cette nouvelle icône, et le bouton apparaîtra ici.";
-      btn.style.display = "none";
-      box.style.display = "block";
-    }
+    if (isIos && !standalone) showUnavailable(iosMessage);
+    else if (!isIos) showUnavailable(otherBrowserMessage);
+    // iPhone ouvert depuis l'icône mais iOS trop ancien : on ne montre rien.
     return;
   }
 
@@ -1063,7 +1072,10 @@ async function initPushSection() {
     const existing = await reg.pushManager.getSubscription();
     render(!!existing && Notification.permission === "granted");
   } catch (e) {
-    return; // navigateur sans prise en charge réelle : on ne montre rien
+    // Navigateur sans prise en charge réelle (ex. navigation privée).
+    // Refus dans les réglages ou iPhone : on garde le comportement d'avant (rien).
+    if (!isIos && Notification.permission !== "denied") showUnavailable(otherBrowserMessage);
+    return;
   }
 
   btn.onclick = async () => {
