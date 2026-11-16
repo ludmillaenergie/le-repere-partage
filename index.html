@@ -26,6 +26,9 @@
     --ink-dim: #8a8072;
     --teal: #5b8a7d;
     --wine: #a25a5e;
+    /* Texte de lecture : un peu plus foncé que --ink pour le confort de lecture. */
+    --ink-text: #2b2723;
+    --ink-soft: #6b6257;
   }
   * { box-sizing: border-box; }
   body {
@@ -110,7 +113,7 @@
   .field-checkbox .hint { margin-left: 24px; margin-top: 4px; }
 
   #preview-block { margin-bottom: 20px; padding: 22px 20px; background: var(--bg); border-radius: 12px; border: 1px solid rgba(200,169,110,0.25); }
-  .preview-text { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.7; color: var(--ink); }
+  .preview-text { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; line-height: 1.7; color: var(--ink-text); }
   .preview-text p { margin: 0 0 14px; }
   .preview-text p:last-child { margin-bottom: 0; }
 
@@ -132,7 +135,7 @@
   section.block { padding: 30px 28px; margin: 0 16px 20px; background: var(--card); border-radius: 16px; box-shadow: 0 8px 28px rgba(200,169,110,0.14); border: 1px solid rgba(200,169,110,0.18); }
   section.block .label { font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
   section.block .title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 22px; margin: 0 0 20px; color: var(--ink); }
-  #reading { font-family: 'Cormorant Garamond', serif; font-size: 19px; line-height: 1.75; color: var(--ink); }
+  #reading { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 500; line-height: 1.75; color: var(--ink-text); }
   #reading p { margin: 0 0 16px; }
   .loading { font-style: italic; color: var(--ink-dim); font-size: 15px; }
 </style>
@@ -401,13 +404,13 @@
   #reading-detail summary::-webkit-details-marker { display: none; }
   #reading-detail summary::before { content: "+ "; }
   #reading-detail[open] summary::before { content: "− "; }
-  #reading-detail-content { margin-top: 16px; font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.7; color: var(--ink-dim); }
+  #reading-detail-content { margin-top: 16px; font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; line-height: 1.7; color: var(--ink-soft); }
   #reading-detail-content p { margin: 0 0 14px; }
 
   #chat-messages { margin-bottom: 14px; }
   .chat-msg { padding: 12px 14px; margin-bottom: 10px; border-radius: 10px; }
-  .chat-msg.user { background: var(--bg); border-left: 3px solid var(--gold); font-size: 14px; color: var(--ink-dim); }
-  .chat-msg.assistant { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.65; color: var(--ink); padding-left: 2px; }
+  .chat-msg.user { background: var(--bg); border-left: 3px solid var(--gold); font-size: 15px; color: var(--ink-soft); }
+  .chat-msg.assistant { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; line-height: 1.65; color: var(--ink-text); padding-left: 2px; }
   .chat-msg.assistant p { margin: 0 0 10px; }
   .chat-msg.assistant p:last-child { margin-bottom: 0; }
   .chat-input-row { display: flex; flex-direction: column; gap: 10px; }
